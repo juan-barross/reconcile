@@ -3,7 +3,7 @@ version: 2
 sources:
   - name: olist
     description: >
-      CSVs da Olist carregados como texto por `nqb carregar`. Nada é
+      CSVs da Olist carregados como texto por `reconcile carregar`. Nada é
       interpretado aqui; tipos e nomes ficam no staging.
     schema: raw
     tables:

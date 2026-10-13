@@ -47,5 +47,5 @@ def test_registra_cada_carga(csv_dir, tmp_path):
 
 def test_falha_com_mensagem_clara_sem_o_csv(csv_dir, tmp_path):
     (csv_dir / FONTES[0].arquivo).unlink()
-    with pytest.raises(FileNotFoundError, match="nqb baixar"):
+    with pytest.raises(FileNotFoundError, match="reconcile baixar"):
         carregar(csv_dir, tmp_path / "t.duckdb")

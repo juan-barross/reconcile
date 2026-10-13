@@ -4,7 +4,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-DATA_DIR = Path(os.environ.get("NQB_DATA_DIR", "data"))
+DATA_DIR = Path(os.environ.get("RECONCILE_DATA_DIR", "data"))
 CSV_DIR = DATA_DIR / "csv"
 DB_PATH = DATA_DIR / "olist.duckdb"
 

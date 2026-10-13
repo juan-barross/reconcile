@@ -1,8 +1,8 @@
-# O caminho do banco vem de NQB_DB_PATH; o padrão vale para quem roda de dentro de dbt/.
-numeros_que_batem:
+# O caminho do banco vem de RECONCILE_DB_PATH; o padrão vale para quem roda de dentro de dbt/.
+reconcile:
   target: dev
   outputs:
     dev:
       type: duckdb
-      path: "{{ env_var('NQB_DB_PATH', '../data/olist.duckdb') }}"
+      path: "{{ env_var('RECONCILE_DB_PATH', '../data/olist.duckdb') }}"
       threads: 4

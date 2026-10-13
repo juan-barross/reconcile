@@ -17,7 +17,7 @@ DuckDB, num arquivo em `data/olist.duckdb`, com o adaptador `dbt-duckdb`.
 
 ## Por quê
 
-- **Reprodução com um comando.** `uv sync && uv run nqb tudo` baixa, carrega, roda o dbt e imprime a reunião. Não precisa de Docker, porta livre nem senha.
+- **Reprodução com um comando.** `uv sync && uv run reconcile tudo` baixa, carrega, roda o dbt e imprime a reunião. Não precisa de Docker, porta livre nem senha.
 - **CI barata.** O GitHub Actions roda `dbt build` sem subir um serviço de banco.
 - **MetricFlow suporta DuckDB** de forma oficial (`dbt-metricflow[duckdb]`).
 - **O SQL continua portável.** Os modelos usam SQL padrão e as macros do dbt para datas. Mudar para Postgres significa trocar o perfil em `profiles.yml` e ajustar poucas funções.

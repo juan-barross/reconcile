@@ -1,6 +1,6 @@
 # A reunião
 
-Gerado por `nqb reuniao` a partir das consultas em [`departamentos/`](../departamentos/). Não edite os números à mão.
+Gerado por `reconcile reuniao` a partir das consultas em [`departamentos/`](../departamentos/). Não edite os números à mão.
 
 Cada área da Olist respondeu às mesmas três perguntas com a consulta que faria sozinha. Nenhuma está errada no sentido técnico: todas rodam e todas contam alguma coisa real. Elas discordam porque cada uma escolheu uma chave, uma data e um filtro diferentes, sem escrever a escolha em lugar nenhum.
 

@@ -30,7 +30,7 @@ def test_relatorio_tem_uma_linha_por_checagem(db_amostra, tmp_path):
 CSV_REAL = Path("data/csv")
 
 
-@pytest.mark.skipif(not CSV_REAL.exists(), reason="sem os CSVs reais (rode `nqb baixar`)")
+@pytest.mark.skipif(not CSV_REAL.exists(), reason="sem os CSVs reais (rode `reconcile baixar`)")
 def test_amostra_tem_os_mesmos_cabecalhos_do_dado_real():
     for fonte in FONTES:
         # utf-8-sig: o CSV de tradução de categorias vem com BOM

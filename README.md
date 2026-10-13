@@ -1,6 +1,8 @@
-# Os números não batem
+# Reconcile
 
-Uma fonte única de verdade para o funil de crescimento da Olist: lead, contrato, primeira venda e receita.
+[![CI](https://github.com/juan-barross/Reconcile-/actions/workflows/ci.yml/badge.svg)](https://github.com/juan-barross/Reconcile-/actions/workflows/ci.yml)
+
+**Os números não batem.** Uma fonte única de verdade para o funil de crescimento da Olist: lead, contrato, primeira venda e receita.
 
 Na reunião do mês, marketing, vendas, financeiro e operação trazem números diferentes para a mesma pergunta. Este projeto reproduz essa divergência com os **dados reais** da Olist, mede o tamanho de cada causa e constrói uma camada única de métricas em dbt para que a divergência não volte.
 
@@ -19,32 +21,32 @@ Nenhum dos três está errado. Marketing conta pela data do primeiro contato, ve
 Requer Python 3.12 e [uv](https://docs.astral.sh/uv/). Não precisa de conta no Kaggle nem de Docker.
 
 ```bash
-git clone https://github.com/OWNER/numeros-que-batem.git
-cd numeros-que-batem
+git clone https://github.com/juan-barross/Reconcile-.git reconcile
+cd reconcile
 uv sync
 ```
 
 **Com o dado real** (baixa ~45 MB do Kaggle, sem login):
 
 ```bash
-uv run nqb tudo
+uv run reconcile tudo
 ```
 
 **Sem rede, com a amostra sintética** (30 pedidos com anomalias plantadas):
 
 ```bash
-uv run nqb --amostra tudo
+uv run reconcile --amostra tudo
 ```
 
-`nqb tudo` faz, em ordem: baixa os CSVs, carrega no DuckDB como texto, roda a auditoria, roda `dbt build` (modelos e testes) e gera a página da reunião. Cada passo também roda sozinho:
+`reconcile tudo` faz, em ordem: baixa os CSVs, carrega no DuckDB como texto, roda a auditoria, roda `dbt build` (modelos e testes) e gera a página da reunião. Cada passo também roda sozinho:
 
 | comando | o que faz | saída |
 |---|---|---|
-| `nqb baixar` | baixa os 11 CSVs da Olist | `data/csv/` |
-| `nqb carregar` | carrega em `raw`, tudo como texto | `data/olist.duckdb` |
-| `nqb auditar` | duplicatas, órfãos, datas impossíveis | [`docs/auditoria.md`](docs/auditoria.md) |
-| `nqb dbt` | `dbt build` de staging, intermediate e marts | testes no terminal |
-| `nqb reuniao --mes 2018-03` | cada área responde e as pontes explicam | [`docs/a_reuniao.md`](docs/a_reuniao.md) |
+| `reconcile baixar` | baixa os 11 CSVs da Olist | `data/csv/` |
+| `reconcile carregar` | carrega em `raw`, tudo como texto | `data/olist.duckdb` |
+| `reconcile auditar` | duplicatas, órfãos, datas impossíveis | [`docs/auditoria.md`](docs/auditoria.md) |
+| `reconcile dbt` | `dbt build` de staging, intermediate e marts | testes no terminal |
+| `reconcile reuniao --mes 2018-03` | cada área responde e as pontes explicam | [`docs/a_reuniao.md`](docs/a_reuniao.md) |
 
 Com `--amostra`, as saídas vão para `data/amostra/` e não sobrescrevem `docs/`.
 
@@ -57,7 +59,7 @@ uv run pytest
 ### Painel (opcional)
 
 ```bash
-uv run nqb tudo
+uv run reconcile tudo
 docker compose up -d
 ```
 
@@ -66,7 +68,7 @@ O Metabase sobe em http://localhost:3000 e lê `data/olist.duckdb` em modo leitu
 ## Como o projeto está organizado
 
 ```text
-ingest/          download, carga, auditoria, amostra sintética, reunião e o CLI `nqb`
+ingest/          download, carga, auditoria, amostra sintética, reunião e o CLI `reconcile`
 departamentos/   a consulta "ingênua" de cada área, sem retoque
 dbt/             staging -> intermediate -> marts, com testes
 docs/            a reunião, a auditoria e as ADRs
@@ -120,4 +122,4 @@ A taxa de 55% de lojistas que nunca venderam já tinha sido apontada em [RHughes
 - [Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce)
 - [Marketing Funnel by Olist](https://www.kaggle.com/datasets/olistbr/marketing-funnel-olist)
 
-Os dados são CC BY-NC-SA 4.0 e não estão no repositório: `nqb baixar` busca direto do Kaggle. O código é MIT.
+Os dados são CC BY-NC-SA 4.0 e não estão no repositório: `reconcile baixar` busca direto do Kaggle. O código é MIT.

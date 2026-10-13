@@ -33,7 +33,7 @@ def _sha256(caminho: Path) -> str:
 def carregar_fonte(con: duckdb.DuckDBPyConnection, fonte: Fonte, csv_dir: Path) -> Carga:
     caminho = csv_dir / fonte.arquivo
     if not caminho.exists():
-        raise FileNotFoundError(f"{caminho} não existe. Rode `nqb baixar` antes.")
+        raise FileNotFoundError(f"{caminho} não existe. Rode `reconcile baixar` antes.")
 
     con.execute(
         f"""

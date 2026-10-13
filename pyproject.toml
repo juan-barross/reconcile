@@ -1,5 +1,5 @@
 [project]
-name = "numeros-que-batem"
+name = "reconcile"
 version = "0.1.0"
 description = "Fonte única de verdade para o funil de crescimento da Olist"
 readme = "README.md"
@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-nqb = "ingest.cli:app"
+reconcile = "ingest.cli:app"
 
 [dependency-groups]
 dev = [

@@ -1,4 +1,4 @@
-# Painel opcional. Rode `uv run nqb tudo` antes: o Metabase só lê o arquivo.
+# Painel opcional. Rode `uv run reconcile tudo` antes: o Metabase só lê o arquivo.
 services:
   metabase:
     build: docker/metabase

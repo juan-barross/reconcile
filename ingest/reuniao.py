@@ -316,7 +316,7 @@ def para_markdown(con: duckdb.DuckDBPyConnection, mes: str) -> str:
     partes = [
         "# A reunião",
         "",
-        "Gerado por `nqb reuniao` a partir das consultas em [`departamentos/`]"
+        "Gerado por `reconcile reuniao` a partir das consultas em [`departamentos/`]"
         "(../departamentos/). Não edite os números à mão.",
         "",
         "Cada área da Olist respondeu às mesmas três perguntas com a consulta que faria "

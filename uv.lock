@@ -665,49 +665,6 @@ wheels = [
 ]
 
 [[package]]
-name = "numeros-que-batem"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "dbt-core" },
-    { name = "dbt-duckdb" },
-    { name = "dbt-metricflow" },
-    { name = "duckdb" },
-    { name = "kagglehub" },
-    { name = "rich" },
-    { name = "typer" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "ruff" },
-    { name = "sqlfluff" },
-    { name = "sqlfluff-templater-dbt" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "dbt-core", specifier = ">=1.9" },
-    { name = "dbt-duckdb", specifier = ">=1.9" },
-    { name = "dbt-metricflow", extras = ["duckdb"], specifier = ">=0.15.0" },
-    { name = "duckdb", specifier = ">=1.5.6" },
-    { name = "kagglehub", specifier = ">=1.0.2" },
-    { name = "rich", specifier = ">=15.0.0" },
-    { name = "typer", specifier = ">=0.27.3" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pre-commit", specifier = ">=4.6.2" },
-    { name = "pytest", specifier = ">=9.1.1" },
-    { name = "ruff", specifier = ">=0.17.0" },
-    { name = "sqlfluff", specifier = ">=4.4.0" },
-    { name = "sqlfluff-templater-dbt", specifier = ">=4.4.0" },
-]
-
-[[package]]
 name = "opentelemetry-api"
 version = "1.45.1"
 source = { registry = "https://pypi.org/simple" }
@@ -976,6 +933,49 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/07/8a/995b4746c5bc1f561e64de1fa546927183fec7a369fe988716ef394a6d0a/rapidfuzz-3.14.6-cp312-cp312-win32.whl", hash = "sha256:9e974251a9833791bc557b46f975676a56c2d58946f795cd2964b095496dfdcc", size = 1887051, upload-time = "2026-08-30T21:42:48.265Z" },
     { url = "https://files.pythonhosted.org/packages/84/c4/12f01df5778227c8655fcd9b429fc001d43270f5d8d154edc9066bab1de3/rapidfuzz-3.14.6-cp312-cp312-win_amd64.whl", hash = "sha256:cfca36e4612208875e08611a779164b6cb8900ab8bbd3d82d4cfdfae9efbfac9", size = 1731992, upload-time = "2026-08-30T21:42:50.211Z" },
     { url = "https://files.pythonhosted.org/packages/19/8d/92217f0bc81ec458b4134ad53714b1be0cd3be21494227d73510b06467d6/rapidfuzz-3.14.6-cp312-cp312-win_arm64.whl", hash = "sha256:96bbd5a1c67d135334d02fae74f1d933fdda204ea03d544a59dab6b1cbfbf565", size = 1186693, upload-time = "2026-08-30T21:42:52.63Z" },
+]
+
+[[package]]
+name = "reconcile"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "dbt-core" },
+    { name = "dbt-duckdb" },
+    { name = "dbt-metricflow" },
+    { name = "duckdb" },
+    { name = "kagglehub" },
+    { name = "rich" },
+    { name = "typer" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "ruff" },
+    { name = "sqlfluff" },
+    { name = "sqlfluff-templater-dbt" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "dbt-core", specifier = ">=1.9" },
+    { name = "dbt-duckdb", specifier = ">=1.9" },
+    { name = "dbt-metricflow", extras = ["duckdb"], specifier = ">=0.15.0" },
+    { name = "duckdb", specifier = ">=1.5.6" },
+    { name = "kagglehub", specifier = ">=1.0.2" },
+    { name = "rich", specifier = ">=15.0.0" },
+    { name = "typer", specifier = ">=0.27.3" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pre-commit", specifier = ">=4.6.2" },
+    { name = "pytest", specifier = ">=9.1.1" },
+    { name = "ruff", specifier = ">=0.17.0" },
+    { name = "sqlfluff", specifier = ">=4.4.0" },
+    { name = "sqlfluff-templater-dbt", specifier = ">=4.4.0" },
 ]
 
 [[package]]

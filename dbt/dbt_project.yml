@@ -1,7 +1,7 @@
-name: numeros_que_batem
+name: reconcile
 version: "0.1.0"
 config-version: 2
-profile: numeros_que_batem
+profile: reconcile
 
 model-paths: ["models"]
 test-paths: ["tests"]
@@ -19,7 +19,7 @@ flags:
   require_explicit_package_overrides_for_builtin_materializations: true
 
 models:
-  numeros_que_batem:
+  reconcile:
     staging:
       +schema: staging
       +materialized: view

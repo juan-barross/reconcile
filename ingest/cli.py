@@ -1,7 +1,7 @@
-"""Comando `nqb`: ponto de entrada único do projeto.
+"""Comando `reconcile`: ponto de entrada único do projeto.
 
-nqb tudo              # dado real da Olist (baixa do Kaggle, ~45 MB)
-nqb --amostra tudo    # amostra sintética, sem rede, em segundos
+reconcile tudo              # dado real da Olist (baixa do Kaggle, ~45 MB)
+reconcile --amostra tudo    # amostra sintética, sem rede, em segundos
 """
 
 import os
@@ -14,7 +14,9 @@ from rich.console import Console
 
 from ingest.fontes import Caminhos, caminhos
 
-app = typer.Typer(help="Os números não batem: pipeline da Olist.", no_args_is_help=True)
+app = typer.Typer(
+    help="Reconcile: por que as áreas da Olist têm números diferentes.", no_args_is_help=True
+)
 console = Console()
 
 DBT_DIR = Path(__file__).resolve().parent.parent / "dbt"
@@ -31,7 +33,7 @@ def main(
         False, "--amostra", help="Usa a amostra sintética em data/amostra em vez do dado real."
     ),
 ) -> None:
-    """Os números não batem."""
+    """Reconcile: por que as áreas da Olist têm números diferentes."""
     ctx.obj = caminhos(amostra)
 
 
@@ -81,7 +83,7 @@ def rodar_dbt(db_path: Path, *args: str) -> bool:
     Subprocesso, e não dbtRunner, porque o dbt-duckdb deixa a conexão com o
     arquivo aberta no processo, e a leitura seguinte (read_only) falharia.
     """
-    env = {**os.environ, "NQB_DB_PATH": str(db_path.resolve())}
+    env = {**os.environ, "RECONCILE_DB_PATH": str(db_path.resolve())}
     comum = ["--project-dir", str(DBT_DIR), "--profiles-dir", str(DBT_DIR)]
     dbt_cli = [sys.executable, "-c", "from dbt.cli.main import cli; cli()"]
     if not (DBT_DIR / "dbt_packages").exists():

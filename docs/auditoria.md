@@ -1,6 +1,6 @@
 # Auditoria da camada raw
 
-Gerado por `nqb auditar` em 2026-10-10. Não edite à mão.
+Gerado por `reconcile auditar` em 2026-10-10. Não edite à mão.
 
 ## Linhas por tabela
 

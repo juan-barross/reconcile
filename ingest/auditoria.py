@@ -239,7 +239,7 @@ def para_markdown(resultados: list[tuple[Checagem, int]], linhas: list[tuple[str
     partes = [
         "# Auditoria da camada raw",
         "",
-        f"Gerado por `nqb auditar` em {date.today().isoformat()}. Não edite à mão.",
+        f"Gerado por `reconcile auditar` em {date.today().isoformat()}. Não edite à mão.",
         "",
         "## Linhas por tabela",
         "",
