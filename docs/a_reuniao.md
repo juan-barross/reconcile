@@ -84,6 +84,18 @@ Cancelados e indisponíveis pesam R$ 108.026,21 na conta de vendas e R$ 235.248,
 
 Num mês isolado aparece a causa que some no acumulado: a data. Um pedido feito no dia 31 e aprovado no dia 1º é receita de um mês para vendas e do outro para o financeiro.
 
-## O que isso pede
+## A resposta da camada única
 
-Nenhuma das diferenças acima é erro de SQL. Todas são decisões que ninguém escreveu: qual coluna é o cliente, qual data vale, se cancelado entra. O próximo passo é escrever essas decisões num [contrato de métricas](contrato_de_metricas.md) e construir uma camada única que as aplique.
+Nenhuma das diferenças acima é erro de SQL. Todas são decisões que ninguém escreveu: qual coluna é o cliente, qual data vale, se cancelado entra. O [contrato de métricas](contrato_de_metricas.md) escreve essas decisões e os marts do dbt as aplicam. Em mar/2018, a camada única responde:
+
+| métrica | mar/2018 | regra (ver contrato) |
+|---|---:|---|
+| lojistas contratados | 147 | data do contrato |
+| lojistas ativados | 25 | primeira venda válida, no mês dela |
+| clientes novos | 6.931 | pessoa (`customer_unique_id`), primeira compra válida |
+| pedidos válidos | 7.168 | sem cancelados, indisponíveis ou pedidos sem item |
+| receita bruta | R$ 1.152.656,99 | itens + frete, data da compra |
+| receita paga | R$ 1.164.078,78 | pagamentos, data de aprovação (reserva: compra) |
+| ticket médio | R$ 160,81 | receita bruta ÷ pedidos válidos |
+
+Cada área continua podendo olhar o seu recorte, mas agora com nome próprio: o marketing quer "contratos por mês do lead", que é outra pergunta, e não "lojistas conquistados" com outra data.
