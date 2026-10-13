@@ -259,13 +259,15 @@ models:
       - name: ativado_em_90d
         data_type: boolean
         constraints: [{type: not_null}]
-      - name: observado_12m
+      - name: observado_180d
         data_type: boolean
         constraints: [{type: not_null}]
       - name: pedidos_validos
         data_type: bigint
       - name: receita_bruta_acumulada
         data_type: decimal(18,2)
-      - name: receita_bruta_12m
-        description: Receita bruta nos 365 dias após o contrato.
+      - name: receita_bruta_180d
+        description: >
+          Receita bruta nos 180 dias após o contrato. A base não permite 12
+          meses: o contrato mais antigo é de dez/2017 e fim_observacao é 31/08/2018.
         data_type: decimal(18,2)
