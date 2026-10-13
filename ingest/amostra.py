@@ -122,9 +122,11 @@ def gerar() -> dict[str, list[list[str]]]:
             "cat", "", "", "", "reseller", "", "0.0",
         ])  # fmt: skip
 
-    # Clientes: 30 customer_ids, 26 pessoas (u01..u04 compram duas vezes)
+    # Clientes: 30 customer_ids, 26 pessoas. u01..u04 voltam a comprar em c21..c24,
+    # pedidos válidos: se a recompra caísse num pedido cancelado, trocar a chave de
+    # cliente para customer_id não mudaria nenhum número e passaria calado.
     for i in range(1, 31):
-        pessoa = f"u{(i - 1) % 26 + 1:02d}"
+        pessoa = f"u{i - 20:02d}" if 21 <= i <= 24 else f"u{i:02d}"
         t["customers"].append([f"c{i:02d}", pessoa, "01000", "sao paulo", "SP"])
 
     # Pedidos: 30. o29 e o30 sem itens (indisponível e cancelado), mas pagos.
