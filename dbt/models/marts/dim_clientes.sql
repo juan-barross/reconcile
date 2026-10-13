@@ -26,4 +26,4 @@ select
 from pedidos as p
 inner join estado as e
     on p.customer_unique_id = e.customer_unique_id
-group by p.customer_unique_id, e.estado
+group by 1, 2
