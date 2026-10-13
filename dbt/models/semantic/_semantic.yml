@@ -1,0 +1,179 @@
+version: 2
+
+# Camada semântica: cada métrica de docs/contrato_de_metricas.md definida uma
+# vez. A regra de data de cada métrica é o agg_time_dimension da sua medida, então
+# "receita paga por mês" sempre agrupa pela data de aprovação, sem ninguém lembrar.
+
+models:
+  - name: metricflow_time_spine
+    description: Um dia por linha, de 2016 a 2019.
+    time_spine:
+      standard_granularity_column: date_day
+    columns:
+      - name: date_day
+        granularity: day
+        data_tests: [unique, not_null]
+
+semantic_models:
+  - name: pedidos
+    description: Pedidos (fct_pedidos). Receita bruta e paga já valem zero em pedido não válido.
+    model: ref('fct_pedidos')
+    defaults:
+      agg_time_dimension: comprado_em
+    entities:
+      - name: pedido
+        type: primary
+        expr: order_id
+      - name: cliente
+        type: foreign
+        expr: customer_unique_id
+    dimensions:
+      - name: comprado_em
+        type: time
+        type_params: {time_granularity: day}
+      - name: receita_paga_em
+        type: time
+        type_params: {time_granularity: day}
+      - name: status
+        type: categorical
+      - name: eh_valido
+        type: categorical
+    measures:
+      - name: receita_bruta
+        description: Itens + frete de pedidos válidos, pela data da compra.
+        agg: sum
+      - name: receita_paga
+        description: Pagamentos de pedidos válidos, pela data de aprovação.
+        agg: sum
+        agg_time_dimension: receita_paga_em
+      - name: pedidos_validos
+        description: Pedidos válidos, pela data da compra.
+        agg: sum
+        expr: "case when eh_valido then 1 else 0 end"
+
+  - name: clientes
+    description: Pessoas (dim_clientes), pela primeira compra válida.
+    model: ref('dim_clientes')
+    defaults:
+      agg_time_dimension: primeira_compra_em
+    entities:
+      - name: cliente
+        type: primary
+        expr: customer_unique_id
+    dimensions:
+      - name: primeira_compra_em
+        type: time
+        type_params: {time_granularity: day}
+      - name: estado
+        type: categorical
+    measures:
+      - name: clientes_novos
+        description: Pessoas cuja primeira compra válida cai no período.
+        agg: sum
+        expr: "case when eh_cliente then 1 else 0 end"
+
+  - name: leads
+    description: Leads qualificados (dim_leads), pelo primeiro contato.
+    model: ref('dim_leads')
+    defaults:
+      agg_time_dimension: primeiro_contato_em
+    entities:
+      - name: lead
+        type: primary
+        expr: mql_id
+    dimensions:
+      - name: primeiro_contato_em
+        type: time
+        type_params: {time_granularity: day}
+      - name: canal
+        type: categorical
+    measures:
+      - name: leads
+        description: Leads qualificados, pela data do primeiro contato.
+        agg: sum
+        expr: "1"
+
+  - name: jornada
+    description: Contratos (fct_jornada_lojista), do lead à receita.
+    model: ref('fct_jornada_lojista')
+    defaults:
+      agg_time_dimension: contratado_em
+    entities:
+      - name: contrato
+        type: primary
+        expr: mql_id
+      - name: lead
+        type: foreign
+        expr: mql_id
+    dimensions:
+      - name: contratado_em
+        type: time
+        type_params: {time_granularity: day}
+      - name: primeira_venda_em
+        type: time
+        type_params: {time_granularity: day}
+      - name: segmento
+        type: categorical
+      - name: tipo_lead
+        type: categorical
+    measures:
+      - name: lojistas_contratados
+        description: Contratos fechados, pela data do contrato.
+        agg: sum
+        expr: "1"
+      - name: lojistas_ativados
+        description: Contratados com pedido válido, pela data da primeira venda.
+        agg: sum
+        expr: "case when foi_ativado then 1 else 0 end"
+        agg_time_dimension: primeira_venda_em
+
+metrics:
+  - name: leads
+    label: Leads qualificados
+    description: Dono marketing. Data do primeiro contato.
+    type: simple
+    type_params: {measure: leads}
+
+  - name: lojistas_contratados
+    label: Lojistas contratados
+    description: Dono vendas. Data do contrato.
+    type: simple
+    type_params: {measure: lojistas_contratados}
+
+  - name: lojistas_ativados
+    label: Lojistas ativados
+    description: Dono operação. Data da primeira venda válida.
+    type: simple
+    type_params: {measure: lojistas_ativados}
+
+  - name: pedidos_validos
+    label: Pedidos válidos
+    description: Dono operação. Data da compra.
+    type: simple
+    type_params: {measure: pedidos_validos}
+
+  - name: clientes_novos
+    label: Clientes compradores novos
+    description: Dono marketing. Pessoa, data da primeira compra válida.
+    type: simple
+    type_params: {measure: clientes_novos}
+
+  - name: receita_bruta
+    label: Receita bruta (GMV)
+    description: Dono vendas. Itens + frete de pedidos válidos, data da compra.
+    type: simple
+    type_params: {measure: receita_bruta}
+
+  - name: receita_paga
+    label: Receita paga
+    description: Dono financeiro. Pagamentos de pedidos válidos, data de aprovação.
+    type: simple
+    type_params: {measure: receita_paga}
+
+  - name: ticket_medio
+    label: Ticket médio
+    description: Dono vendas. Receita bruta ÷ pedidos válidos, data da compra.
+    type: ratio
+    type_params:
+      numerator: receita_bruta
+      denominator: pedidos_validos
