@@ -105,7 +105,9 @@ def gerar() -> dict[str, list[list[str]]]:
         "organic_search", "paid_search", "social", "organic_search", "email",
         "paid_search", "", "unknown", "referral", "direct_traffic",
     ]  # fmt: skip
-    inicio_funil = datetime(2018, 1, 2)
+    # O funil começa antes das vendas: lojista contratado só vende depois do
+    # contrato, como no dado real (nenhum caso ao contrário).
+    inicio_funil = datetime(2017, 11, 1)
     for i, origem in enumerate(origens, 1):
         contato = (inicio_funil + timedelta(days=7 * i)).date().isoformat()
         t["marketing_qualified_leads"].append([f"m{i:02d}", contato, f"lp{i % 3}", origem])
@@ -151,7 +153,9 @@ def gerar() -> dict[str, list[list[str]]]:
             continue
         valores = []
         for item in range(1, 3 if i % 4 == 0 else 2):
-            preco, frete = 50 + i, 10
+            # o07 (o pedido sem pagamento) é barato, como no dado real, para não
+            # distorcer a receita paga de uma amostra de 30 pedidos
+            preco, frete = (15, 5) if i == 7 else (200 + i, 10)
             valores.append(preco + frete)
             t["order_items"].append([
                 f"o{i:02d}", str(item), f"p{(i + item) % 5 + 1}", f"s{(i + item) % 4 + 1}",
@@ -163,7 +167,7 @@ def gerar() -> dict[str, list[list[str]]]:
             pass
         elif i in (5, 10, 15):  # juros de parcelamento
             t["order_payments"].append([f"o{i:02d}", "1", "credit_card", "6",
-                                        f"{total * 1.05:.2f}"])  # fmt: skip
+                                        f"{total * 1.02:.2f}"])  # fmt: skip
         elif i == 12:  # cartão + voucher zerado
             t["order_payments"].append([f"o{i:02d}", "1", "credit_card", "1", f"{total:.2f}"])
             t["order_payments"].append([f"o{i:02d}", "2", "voucher", "1", "0.00"])
