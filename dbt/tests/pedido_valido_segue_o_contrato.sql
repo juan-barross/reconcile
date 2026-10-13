@@ -1,7 +1,13 @@
 -- Pedido válido: status fora de canceled/unavailable e pelo menos um item.
 -- E pedido não válido não pode carregar receita.
 
-select order_id, status, n_itens, eh_valido, receita_bruta, receita_paga
+select
+    order_id,
+    status,
+    n_itens,
+    eh_valido,
+    receita_bruta,
+    receita_paga
 from {{ ref('fct_pedidos') }}
 where
     (eh_valido and (status in ('canceled', 'unavailable') or n_itens = 0))
