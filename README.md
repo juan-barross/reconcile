@@ -78,7 +78,7 @@ tests/           pytest; roda tudo sobre a amostra sintética
 As camadas do dbt:
 
 - **staging** (`stg_olist__*`): só tipos e nomes, sem join e sem filtro. Os nomes seguem a origem, em inglês.
-- **intermediate** e **marts**: regras de negócio do contrato de métricas, com nomes em português (`fct_pedidos`, `dim_lojistas`, `fct_jornada_lojista`).
+- **intermediate** e **marts**: regras de negócio do [contrato de métricas](docs/contrato_de_metricas.md), com nomes em português (`fct_pedidos`, `dim_lojistas`, `fct_jornada_lojista`).
 
 ## O que a auditoria achou
 
@@ -103,7 +103,7 @@ Do relatório completo em [docs/auditoria.md](docs/auditoria.md):
 - [x] Staging com testes
 - [x] Amostra sintética e CI
 - [x] A reunião: a divergência entre áreas com números
-- [ ] Contrato de métricas, intermediate e marts com contratos de modelo
+- [x] Contrato de métricas, intermediate e marts com contratos de modelo
 - [ ] Camada semântica (MetricFlow) e painel no Metabase
 - [ ] Prova de que os testes barram divergência reintroduzida
 - [ ] Valor por lead por canal, com intervalos
