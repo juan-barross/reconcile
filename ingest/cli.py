@@ -155,10 +155,22 @@ def quebrar(ctx: typer.Context) -> None:
 
 
 @app.command()
+def crescimento(ctx: typer.Context) -> None:
+    """Valor por lead por canal, ativação e o Growth Review (docs/growth_review.md)."""
+    from analysis.growth_review import gerar
+
+    c: Caminhos = ctx.obj
+    pasta = c.base if c.amostra else Path("docs")
+    console.print(f"[green]Growth Review em {gerar(c.db_path, pasta)}[/]")
+
+
+@app.command()
 def tudo(ctx: typer.Context) -> None:
-    """Baixa, carrega, audita, roda o dbt e gera a reunião, nessa ordem."""
+    """Baixa, carrega, audita, roda o dbt, gera a reunião e o Growth Review."""
     for passo in (baixar, carregar, auditar, dbt):
         console.rule(passo.__name__)
         passo(ctx)
     console.rule("reuniao")
     reuniao(ctx, mes=MES_PADRAO)
+    console.rule("crescimento")
+    crescimento(ctx)
