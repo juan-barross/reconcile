@@ -138,6 +138,23 @@ def metricas(
 
 
 @app.command()
+def quebrar(ctx: typer.Context) -> None:
+    """Quebra o dado de propósito, numa cópia, e mostra qual teste pega cada quebra."""
+    from ingest.quebras import gerar
+
+    c: Caminhos = ctx.obj
+    if c.amostra:
+        saida, base = c.base / "o_dia_que_mexeram_na_origem.md", "a amostra sintética"
+    else:
+        saida, base = Path("docs/o_dia_que_mexeram_na_origem.md"), "o dado real da Olist"
+    caminho, resultados = gerar(c.db_path, saida, base)
+    for cenario, falhas in resultados:
+        cor = "green" if bool(falhas) != (cenario.nome == "controle") else "red"
+        console.print(f"[{cor}]{cenario.nome}: {len(falhas)} teste(s) falharam[/]")
+    console.print(f"[green]Relatório em {caminho}[/]")
+
+
+@app.command()
 def tudo(ctx: typer.Context) -> None:
     """Baixa, carrega, audita, roda o dbt e gera a reunião, nessa ordem."""
     for passo in (baixar, carregar, auditar, dbt):
