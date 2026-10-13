@@ -422,15 +422,66 @@ def para_markdown(con: duckdb.DuckDBPyConnection, mes: str) -> str:
         "dia 31 e aprovado no dia 1º é receita de um mês para vendas e do outro para o "
         "financeiro.",
         "",
-        "## O que isso pede",
+        "## A resposta da camada única",
         "",
         "Nenhuma das diferenças acima é erro de SQL. Todas são decisões que ninguém escreveu: "
-        "qual coluna é o cliente, qual data vale, se cancelado entra. O próximo passo é "
-        "escrever essas decisões num [contrato de métricas](contrato_de_metricas.md) e "
-        "construir uma camada única que as aplique.",
+        "qual coluna é o cliente, qual data vale, se cancelado entra. O "
+        "[contrato de métricas](contrato_de_metricas.md) escreve essas decisões e os marts do "
+        f"dbt as aplicam. Em {m}, a camada única responde:",
+        "",
+        _tabela_camada_unica(camada_unica(con, mes), m),
+        "",
+        "Cada área continua podendo olhar o seu recorte, mas agora com nome próprio: o "
+        'marketing quer "contratos por mês do lead", que é outra pergunta, e não '
+        '"lojistas conquistados" com outra data.',
         "",
     ]
     return "\n".join(partes)
+
+
+def camada_unica(con: duckdb.DuckDBPyConnection, mes: str) -> dict[str, float]:
+    """O número oficial de cada métrica do contrato num mês, lido só dos marts."""
+    sql = """
+    select
+        (select count(*) from marts.fct_jornada_lojista
+         where strftime(contratado_em, '%Y-%m') = $mes),
+        (select count(*) from marts.fct_jornada_lojista
+         where foi_ativado and strftime(primeira_venda_em, '%Y-%m') = $mes),
+        (select count(*) from marts.dim_clientes
+         where strftime(primeira_compra_em, '%Y-%m') = $mes),
+        (select count(*) from marts.fct_pedidos
+         where eh_valido and strftime(comprado_em, '%Y-%m') = $mes),
+        (select coalesce(sum(receita_bruta), 0) from marts.fct_pedidos
+         where strftime(comprado_em, '%Y-%m') = $mes),
+        (select coalesce(sum(receita_paga), 0) from marts.fct_pedidos
+         where strftime(receita_paga_em, '%Y-%m') = $mes)
+    """
+    nomes = ["lojistas_contratados", "lojistas_ativados", "clientes_novos",
+             "pedidos_validos", "receita_bruta", "receita_paga"]  # fmt: skip
+    valores = dict(zip(nomes, (float(x) for x in con.execute(sql, {"mes": mes}).fetchone()),
+                       strict=True))  # fmt: skip
+    p = valores["pedidos_validos"]
+    valores["ticket_medio"] = valores["receita_bruta"] / p if p else 0.0
+    return valores
+
+
+def _tabela_camada_unica(v: dict[str, float], m: str) -> str:
+    linhas = [
+        f"| métrica | {m} | regra (ver contrato) |",
+        "|---|---:|---|",
+        f"| lojistas contratados | {_n(v['lojistas_contratados'])} | data do contrato |",
+        f"| lojistas ativados | {_n(v['lojistas_ativados'])} | "
+        "primeira venda válida, no mês dela |",
+        f"| clientes novos | {_n(v['clientes_novos'])} | "
+        "pessoa (`customer_unique_id`), primeira compra válida |",
+        f"| pedidos válidos | {_n(v['pedidos_validos'])} | "
+        "sem cancelados, indisponíveis ou pedidos sem item |",
+        f"| receita bruta | {_r(v['receita_bruta'])} | itens + frete, data da compra |",
+        f"| receita paga | {_r(v['receita_paga'])} | "
+        "pagamentos, data de aprovação (reserva: compra) |",
+        f"| ticket médio | {_r(v['ticket_medio'])} | receita bruta ÷ pedidos válidos |",
+    ]
+    return "\n".join(linhas)
 
 
 def _tabela_ponte(p: PonteReceita) -> str:

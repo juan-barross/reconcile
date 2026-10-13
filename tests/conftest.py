@@ -16,12 +16,12 @@ def db_amostra(tmp_path_factory):
 
 @pytest.fixture(scope="session")
 def db_amostra_staging(db_amostra, tmp_path_factory):
-    """A amostra com as views de staging do dbt construídas."""
+    """A amostra com todas as camadas do dbt construídas (staging a marts)."""
     import shutil
 
     from ingest.cli import rodar_dbt
 
     db = tmp_path_factory.mktemp("staging") / "olist.duckdb"
     shutil.copyfile(db_amostra, db)
-    assert rodar_dbt(db, "run", "--select", "staging", "--quiet")
+    assert rodar_dbt(db, "run", "--quiet")
     return db
