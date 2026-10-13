@@ -120,6 +120,24 @@ def reuniao(
 
 
 @app.command()
+def metricas(
+    ctx: typer.Context,
+    mes: str = typer.Option(MES_PADRAO, help="Mês, no formato AAAA-MM."),
+) -> None:
+    """Consulta as métricas do contrato na camada semântica (MetricFlow)."""
+    from rich.table import Table
+
+    from ingest.semantica import por_mes
+
+    c: Caminhos = ctx.obj
+    tabela = Table("métrica", mes, title="Camada semântica (mf query)")
+    for metrica, valor in por_mes(c.db_path, mes).items():
+        texto = f"{valor:,.2f}" if metrica.startswith(("receita", "ticket")) else f"{valor:,.0f}"
+        tabela.add_row(metrica, texto.replace(",", "X").replace(".", ",").replace("X", "."))
+    console.print(tabela)
+
+
+@app.command()
 def tudo(ctx: typer.Context) -> None:
     """Baixa, carrega, audita, roda o dbt e gera a reunião, nessa ordem."""
     for passo in (baixar, carregar, auditar, dbt):
