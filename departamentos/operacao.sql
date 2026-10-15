@@ -1,10 +1,5 @@
--- Como a operação responde.
---
--- Lojistas conquistados: lojista contratado que fez a PRIMEIRA VENDA, no mês
--- dessa venda. Para a operação, lojista que nunca vendeu não dá trabalho nem
--- receita, então não conta.
---
--- Clientes novos: pessoas (customer_unique_id) no mês da primeira compra.
+-- Operação: lojista conquistado = contratado com primeira venda, no mês dela.
+-- Cliente novo = pessoa (customer_unique_id) no mês da primeira compra.
 
 with primeira_venda as (
     select

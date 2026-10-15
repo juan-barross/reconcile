@@ -1,5 +1,3 @@
--- Um item por linha, com a data e a validade do pedido a que pertence.
-
 select
     i.order_id,
     i.order_item_id,

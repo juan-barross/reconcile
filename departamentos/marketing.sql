@@ -1,11 +1,5 @@
--- Como o marketing responde, do jeito que a área faria sozinha.
---
--- Lojistas conquistados: todo lead que virou contrato, no mês do PRIMEIRO
--- CONTATO. É o mês em que a campanha trouxe o lead, então é o mês que o
--- marketing quer ver creditado.
---
--- Clientes novos: compradores no mês, contados por customer_id, que é a
--- coluna que o CRM exporta. A Olist gera um customer_id novo a cada pedido.
+-- Marketing: lojista conquistado = lead que virou contrato, no mês do primeiro contato.
+-- Cliente novo = customer_id distinto no mês da compra.
 
 select
     'marketing' as area,

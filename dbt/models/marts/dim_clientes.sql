@@ -1,6 +1,3 @@
--- Uma pessoa (customer_unique_id) por linha. Quem só teve pedidos não válidos
--- aparece com eh_cliente = false e sem primeira compra.
-
 with pedidos as (
     select * from {{ ref('int_pedidos__valores') }}
 ),

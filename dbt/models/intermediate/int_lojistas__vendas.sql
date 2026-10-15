@@ -1,5 +1,4 @@
--- Um lojista por linha, só com pedidos válidos. Um lojista cujos pedidos
--- foram todos cancelados não aparece aqui: para o contrato, ele não vendeu.
+-- Só pedidos válidos: lojista com todos os pedidos cancelados não aparece.
 
 select
     seller_id,

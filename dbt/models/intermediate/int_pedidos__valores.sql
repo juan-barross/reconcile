@@ -1,6 +1,4 @@
--- Um pedido por linha, com itens e pagamentos já agregados.
--- Agregar antes de juntar é o ponto: um pedido com 2 itens e 2 pagamentos
--- viraria 4 linhas num join direto, e a receita sairia dobrada.
+-- Itens e pagamentos são agregados antes do join; juntar direto multiplica linhas.
 
 with itens as (
     select
@@ -30,7 +28,7 @@ select
     o.purchased_at,
     o.approved_at,
     o.delivered_to_customer_at,
-    -- regra de data da receita paga: aprovação, com a compra como reserva
+    -- receita paga: data de aprovação, ou da compra quando nula
     coalesce(o.approved_at, o.purchased_at) as receita_paga_em,
     coalesce(i.n_itens, 0) as n_itens,
     coalesce(i.valor_itens, 0) as valor_itens,
@@ -39,7 +37,7 @@ select
     coalesce(p.n_pagamentos, 0) as n_pagamentos,
     coalesce(p.valor_pago, 0) as valor_pago,
     p.max_parcelas,
-    -- pedido válido, como no contrato de métricas
+    -- pedido válido (docs/contrato_de_metricas.md)
     (
         o.order_status not in ('canceled', 'unavailable')
         and coalesce(i.n_itens, 0) > 0

@@ -1,5 +1,4 @@
--- Pedido válido: status fora de canceled/unavailable e pelo menos um item.
--- E pedido não válido não pode carregar receita.
+-- Regra de pedido válido do contrato; pedido não válido não carrega receita.
 
 select
     order_id,

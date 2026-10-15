@@ -1,6 +1,4 @@
--- A receita acumulada da jornada tem que ser a receita bruta dos itens
--- vendidos pelos lojistas contratados, e os ativados têm que ser exatamente
--- os contratados com pelo menos um item válido.
+-- Receita e ativados da jornada batem com os itens dos lojistas contratados.
 
 with jornada as (
     select

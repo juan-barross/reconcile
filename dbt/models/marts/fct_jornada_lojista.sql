@@ -1,8 +1,4 @@
--- Um contrato por linha: lead -> contrato -> primeira venda -> receita.
--- É a peça que liga o funil de marketing às vendas reais.
---
--- As janelas (90 e 180 dias) só valem para contratos observados por
--- inteiro antes de fim_observacao; as colunas observado_* dizem quais são.
+-- As janelas de 90 e 180 dias só valem onde observado_* é verdadeiro.
 
 {% set fim = "cast('" ~ var('fim_observacao') ~ "' as date)" %}
 

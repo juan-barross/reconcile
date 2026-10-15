@@ -1,6 +1,4 @@
--- Um lojista por linha: quem vendeu (sellers) e quem só tem contrato
--- (closed_deals). Os contratados que nunca venderam só existem aqui
--- porque a união inclui o funil.
+-- União com closed_deals: quem assinou e nunca vendeu não está em sellers.
 
 with ids as (
     select seller_id from {{ ref('stg_olist__sellers') }}

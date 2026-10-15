@@ -1,6 +1,4 @@
--- A receita paga é datada pela aprovação do pagamento, com a compra como
--- reserva quando a aprovação é nula (contrato de métricas). Se alguém trocar
--- a regra de data no modelo, os meses mudam em silêncio; este teste não deixa.
+-- Receita paga datada pela aprovação, com a compra como reserva.
 
 select
     order_id,

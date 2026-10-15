@@ -1,5 +1,3 @@
--- Um item de pedido por linha. receita_bruta vale zero em pedido não válido.
-
 select
     cast(order_id as varchar) as order_id,
     cast(order_item_id as integer) as order_item_id,

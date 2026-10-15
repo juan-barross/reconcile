@@ -1,7 +1,4 @@
--- Clientes são pessoas (customer_unique_id), não customer_id.
--- O total de clientes na dim tem que ser o número de pessoas distintas, vindas
--- direto do staging, com pedido válido. Se alguém trocar a chave para
--- customer_id em qualquer camada, a dim passa a contar pedidos e isto quebra.
+-- Clientes da dim = pessoas distintas do staging com pedido válido.
 
 with dim as (
     select count(*) as n from {{ ref('dim_clientes') }}

@@ -1,5 +1,3 @@
--- Um lead por linha, com o canal padronizado: origem nula vira 'unknown'.
-
 select
     mql_id,
     first_contact_date,

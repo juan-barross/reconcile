@@ -1,6 +1,5 @@
--- Um pedido por linha, todos os status. As colunas de métrica (receita_bruta,
--- receita_paga) já aplicam o contrato: valem zero em pedido não válido, então
--- somar a coluna em qualquer lugar dá o número certo.
+-- receita_bruta e receita_paga valem zero em pedido não válido: somar a coluna
+-- já dá o número do contrato, sem filtro.
 
 select
     cast(order_id as varchar) as order_id,

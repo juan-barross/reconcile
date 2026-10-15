@@ -1,9 +1,5 @@
--- Como o financeiro responde.
---
--- Receita: soma de tudo que foi pago (com juros de parcelamento e vouchers),
--- no mês da APROVAÇÃO do pagamento. Pedido sem data de aprovação não entra:
--- para o financeiro, dinheiro não aprovado não é receita. O status do pedido
--- não é olhado, então pagamento aprovado de pedido cancelado entra.
+-- Financeiro: receita = pagamentos (com juros) no mês da aprovação.
+-- Sem aprovação não entra; o status do pedido não é olhado.
 
 select
     'financeiro' as area,

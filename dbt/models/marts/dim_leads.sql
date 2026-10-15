@@ -1,5 +1,3 @@
--- Um lead qualificado por linha, com canal e se virou contrato.
-
 select
     cast(l.mql_id as varchar) as mql_id,
     cast(l.first_contact_date as date) as primeiro_contato_em,

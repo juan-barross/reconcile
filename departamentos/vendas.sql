@@ -1,10 +1,5 @@
--- Como o time comercial responde.
---
--- Lojistas conquistados: contratos assinados, no mês do FECHAMENTO. É a data
--- que entra na meta do vendedor.
---
--- Receita: preço dos itens + frete, no mês da COMPRA, de todo pedido que tem
--- item, inclusive cancelado e indisponível. É o valor "vendido" (GMV).
+-- Vendas: lojista conquistado = contrato, no mês do fechamento.
+-- Receita = itens + frete no mês da compra, cancelados inclusive.
 
 select
     'vendas' as area,

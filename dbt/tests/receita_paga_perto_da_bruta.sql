@@ -1,6 +1,4 @@
--- Em pedidos válidos, receita paga e receita bruta só diferem por juros e
--- arredondamento. Mais de 1% de diferença no total quer dizer que algum
--- pagamento de pedido cancelado, ou pagamento duplicado, entrou na conta.
+-- Paga e bruta só diferem por juros e arredondamento; mais de 1% é pagamento indevido.
 
 select
     sum(receita_bruta) as receita_bruta,
