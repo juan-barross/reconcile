@@ -1,13 +1,12 @@
-"""Growth Review: valor por lead, ativação e três recomendações, numa página."""
-
 from dataclasses import dataclass
 from pathlib import Path
 
 import duckdb
 import numpy as np
 
-from analysis import graficos
-from analysis.valor_por_lead import (
+from reconcile import graficos
+from reconcile.formato import numero, pct, reais
+from reconcile.valor_por_lead import (
     JANELA,
     Ativacao,
     Canal,
@@ -17,7 +16,6 @@ from analysis.valor_por_lead import (
     estimar,
     tempos_de_ativacao,
 )
-from ingest.formato import numero, pct, reais
 
 TAXAS = (0.05, 0.10, 0.15, 0.20)
 TAXA_PADRAO = 0.10
@@ -32,7 +30,7 @@ def _r(valor: float) -> str:
 class Fatos:
     estimativas: list[Estimativa]
     ativacoes: list[Ativacao]
-    concentracao_sem_canal: float  # fatia do maior lojista na receita do canal unknown
+    concentracao_sem_canal: float
     mediana_sem_canal: float
 
     def canal(self, nome: str) -> Estimativa:
@@ -52,7 +50,7 @@ class Fatos:
 
     @property
     def receita_por_contrato(self) -> float:
-        # Depois do encolhimento a média é a mesma para todos os canais.
+
         return self.estimativas[0].receita_media
 
 

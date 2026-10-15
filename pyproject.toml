@@ -6,6 +6,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "anthropic>=1.14.0",
     "dbt-core>=1.9",
     "dbt-duckdb>=1.9",
     "dbt-metricflow[duckdb]>=0.15.0",
@@ -18,7 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
-reconcile = "ingest.cli:app"
+reconcile = "reconcile.cli:app"
 
 [dependency-groups]
 dev = [
@@ -34,7 +35,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["ingest", "analysis"]
+packages = ["reconcile"]
 
 [tool.ruff]
 line-length = 100

@@ -1,16 +1,9 @@
-"""Valor de um lead por canal e tempo até a primeira venda.
-
-Valor = P(lead vira contrato) x receita bruta média do contrato nos 180 dias
-seguintes. As duas partes são encolhidas para a média geral (empírico-bayesiano),
-porque há canal com meia dúzia de contratos, e o intervalo vem de bootstrap.
-"""
-
 from dataclasses import dataclass
 
 import duckdb
 import numpy as np
 
-JANELA = 180  # o contrato mais antigo tem ~270 dias observados; 12 meses não cabem
+JANELA = 180
 B = 2000
 SEMENTE = 42
 
@@ -20,7 +13,7 @@ class Canal:
     canal: str
     leads: int
     contratos: int
-    receitas_180d: np.ndarray  # contratos com a janela inteira observada
+    receitas_180d: np.ndarray
 
 
 @dataclass(frozen=True)
@@ -63,7 +56,6 @@ def carregar(con: duckdb.DuckDBPyConnection) -> list[Canal]:
 
 
 def encolher_proporcoes(x: np.ndarray, n: np.ndarray) -> np.ndarray:
-    """Beta-binomial pelo método dos momentos."""
     p0 = x.sum() / n.sum()
     var_entre = np.var(x / n, ddof=1) - np.mean(p0 * (1 - p0) / n)
     if var_entre <= 0:
@@ -73,7 +65,6 @@ def encolher_proporcoes(x: np.ndarray, n: np.ndarray) -> np.ndarray:
 
 
 def encolher_medias(amostras: list[np.ndarray]) -> np.ndarray:
-    """Normal-normal: peso tau² / (tau² + s²/n) para a média do canal."""
     com_dados = [a for a in amostras if len(a)]
     todas = np.concatenate(com_dados)
     mu0, s2 = todas.mean(), todas.var(ddof=1)
@@ -127,7 +118,6 @@ def estimar(canais: list[Canal], b: int = B, semente: int = SEMENTE) -> list[Est
 
 
 def curva_km(tempos: np.ndarray, eventos: np.ndarray) -> list[tuple[float, float]]:
-    """Kaplan-Meier: (dia, fração ainda sem venda), com censura à direita."""
     dias, indice = np.unique(tempos, return_inverse=True)
     vendas = np.bincount(indice, weights=eventos.astype(float))
     saidas = np.bincount(indice)
@@ -137,15 +127,13 @@ def curva_km(tempos: np.ndarray, eventos: np.ndarray) -> list[tuple[float, float
 
 
 def kaplan_meier(tempos: np.ndarray, eventos: np.ndarray, pontos: tuple[int, ...]) -> dict:
-    """Fração ativada até cada ponto."""
     dias, sobrevivencia = map(np.array, zip(*curva_km(tempos, eventos), strict=True))
     posicao = np.searchsorted(dias, pontos, side="right") - 1
     return {p: float(1 - sobrevivencia[i]) for p, i in zip(pontos, posicao, strict=True)}
 
 
 def tempos_de_ativacao(con: duckdb.DuckDBPyConnection) -> dict[str, tuple[np.ndarray, np.ndarray]]:
-    """canal -> (dias, vendeu?), com 'todos' somando os canais."""
-    # Venda depois de fim_observacao é censura: a janela observada acabou antes.
+
     linhas = con.execute(
         """
         with j as (
@@ -177,7 +165,6 @@ def tempos_de_ativacao(con: duckdb.DuckDBPyConnection) -> dict[str, tuple[np.nda
 
 
 def ativacao(con: duckdb.DuckDBPyConnection, pontos=(30, 90, JANELA)) -> list[Ativacao]:
-    """Fração ativada em cada ponto, por canal, do maior para o menor."""
     grupos = sorted(tempos_de_ativacao(con).items(), key=lambda kv: -len(kv[1][0]))
     return [
         Ativacao(canal, len(dias), int((~vendeu).sum()), kaplan_meier(dias, vendeu, pontos))

@@ -1,5 +1,3 @@
--- Receita paga datada pela aprovação, com a compra como reserva.
-
 select
     order_id,
     comprado_em,

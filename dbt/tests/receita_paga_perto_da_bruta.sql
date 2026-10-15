@@ -1,5 +1,3 @@
--- Paga e bruta só diferem por juros e arredondamento; mais de 1% é pagamento indevido.
-
 select
     sum(receita_bruta) as receita_bruta,
     sum(receita_paga) as receita_paga

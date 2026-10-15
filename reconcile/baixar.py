@@ -1,13 +1,7 @@
-"""Download dos datasets da Olist pelo kagglehub.
-
-Os datasets são públicos e baixam sem credencial; se houver ~/.kaggle/kaggle.json
-ou KAGGLE_USERNAME/KAGGLE_KEY, o kagglehub usa.
-"""
-
 import shutil
 from pathlib import Path
 
-from ingest.fontes import FONTES
+from reconcile.caminhos import FONTES
 
 
 def baixar(destino: Path) -> list[Path]:

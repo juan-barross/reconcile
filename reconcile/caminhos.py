@@ -1,5 +1,3 @@
-"""Arquivos de origem e onde cada execução guarda CSVs, banco e relatórios."""
-
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,11 +21,8 @@ class Caminhos:
 
     @property
     def docs_dir(self) -> Path:
-        # Os relatórios do dado real são versionados em docs/; os da amostra, não.
-        return self.base if self.amostra else RAIZ / "docs"
 
-    def relatorio(self, nome: str) -> Path:
-        return self.docs_dir / nome
+        return self.base if self.amostra else RAIZ / "docs"
 
 
 def caminhos(amostra: bool = False) -> Caminhos:

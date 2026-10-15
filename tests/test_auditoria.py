@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
-from ingest import amostra
-from ingest.auditoria import CHECAGENS, auditar, rodar
-from ingest.fontes import FONTES
+from reconcile import amostra
+from reconcile.auditoria import CHECAGENS, auditar, rodar
+from reconcile.caminhos import FONTES
 
 
 def test_auditoria_acha_cada_anomalia_plantada(db_amostra):
@@ -33,7 +33,6 @@ CSV_REAL = Path("data/csv")
 @pytest.mark.skipif(not CSV_REAL.exists(), reason="sem os CSVs reais (rode `reconcile baixar`)")
 def test_amostra_tem_os_mesmos_cabecalhos_do_dado_real():
     for fonte in FONTES:
-        # utf-8-sig: o CSV de tradução de categorias vem com BOM
         with (CSV_REAL / fonte.arquivo).open(encoding="utf-8-sig") as f:
             real = next(csv.reader(f))
         assert amostra.CABECALHOS[fonte.tabela] == real, fonte.arquivo

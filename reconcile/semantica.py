@@ -1,11 +1,9 @@
-"""Consulta às métricas do contrato pela camada semântica (MetricFlow)."""
-
 import calendar
 import csv
 import tempfile
 from pathlib import Path
 
-from ingest import projeto_dbt
+from reconcile import projeto_dbt
 
 METRICAS = (
     "leads",
@@ -41,7 +39,6 @@ def consultar(
 
 
 def por_mes(db_path: Path, mes: str, metricas: tuple[str, ...] = METRICAS) -> dict[str, float]:
-    """Valor de cada métrica no mês; zero quando não há movimento."""
     valores = dict.fromkeys(metricas, 0.0)
     for linha in consultar(db_path, metricas, mes):
         if linha["metric_time__month"].startswith(mes):

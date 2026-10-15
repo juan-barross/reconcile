@@ -1,6 +1,3 @@
--- Vendas: lojista conquistado = contrato, no mês do fechamento.
--- Receita = itens + frete no mês da compra, cancelados inclusive.
-
 select
     'vendas' as area,
     'lojistas conquistados' as pergunta,

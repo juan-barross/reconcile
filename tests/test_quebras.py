@@ -1,6 +1,4 @@
-"""Cada cenário é um dbt build inteiro numa cópia, então só dois rodam aqui."""
-
-from ingest.quebras import CENARIOS, rodar
+from reconcile.quebras import CENARIOS, rodar
 
 POR_NOME = {c.nome: c for c in CENARIOS}
 

@@ -2,7 +2,6 @@
 dialect = duckdb
 templater = jinja
 max_line_length = 100
-# Aliases de CTE em português e nomes curtos são intencionais
 exclude_rules = AL07, ST06
 
 [sqlfluff:templater:jinja]

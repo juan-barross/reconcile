@@ -1,5 +1,3 @@
--- Clientes da dim = pessoas distintas do staging com pedido válido.
-
 with dim as (
     select count(*) as n from {{ ref('dim_clientes') }}
     where eh_cliente

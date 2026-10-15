@@ -1,5 +1,3 @@
--- União com closed_deals: quem assinou e nunca vendeu não está em sellers.
-
 with ids as (
     select seller_id from {{ ref('stg_olist__sellers') }}
     union

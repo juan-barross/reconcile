@@ -1,6 +1,3 @@
--- receita_bruta e receita_paga valem zero em pedido não válido: somar a coluna
--- já dá o número do contrato, sem filtro.
-
 select
     cast(order_id as varchar) as order_id,
     cast(customer_unique_id as varchar) as customer_unique_id,

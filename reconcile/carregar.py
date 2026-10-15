@@ -1,16 +1,10 @@
-"""Carga dos CSVs no esquema raw, tudo como texto.
-
-Tipos ficam no staging do dbt. Assim uma data malformada entra inteira e aparece
-na auditoria, em vez de sumir num cast silencioso.
-"""
-
 import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 
 import duckdb
 
-from ingest.fontes import FONTES, Fonte
+from reconcile.caminhos import FONTES, Fonte
 
 
 @dataclass(frozen=True)

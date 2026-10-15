@@ -1,5 +1,3 @@
--- Só pedidos válidos: lojista com todos os pedidos cancelados não aparece.
-
 select
     seller_id,
     min(purchased_at) as primeira_venda_em,

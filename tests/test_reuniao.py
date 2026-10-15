@@ -1,7 +1,7 @@
 import duckdb
 import pytest
 
-from ingest import pontes, reuniao
+from reconcile import pontes, reuniao
 
 
 @pytest.fixture
@@ -23,10 +23,10 @@ def test_ponte_de_receita_fecha_na_base_e_em_cada_mes(con):
 
 def test_ponte_de_receita_acha_as_causas_plantadas(con):
     p = pontes.ponte_receita(con)
-    assert p.pago_a_mais_pedidos == 3  # o05, o10, o15 com juros de 2%
+    assert p.pago_a_mais_pedidos == 3
     assert p.pago_a_mais_parcelados == 3
-    assert p.pago_sem_item == pytest.approx(160.0)  # o29 e o30, R$ 80 cada
-    assert p.sem_pagamento == pytest.approx(20.0)  # o07: R$ 15 + R$ 5 de frete
+    assert p.pago_sem_item == pytest.approx(160.0)
+    assert p.sem_pagamento == pytest.approx(20.0)
     assert p.pago_a_menos == 0
 
 

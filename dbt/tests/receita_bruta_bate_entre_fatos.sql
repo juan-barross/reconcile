@@ -1,5 +1,3 @@
--- Receita bruta por item e por pedido; um join que multiplique linhas quebra aqui.
-
 with por_item as (
     select sum(receita_bruta) as total from {{ ref('fct_itens') }}
 ),

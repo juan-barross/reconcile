@@ -1,5 +1,3 @@
--- As janelas de 90 e 180 dias só valem onde observado_* é verdadeiro.
-
 {% set fim = "cast('" ~ var('fim_observacao') ~ "' as date)" %}
 
 with contratos as (

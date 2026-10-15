@@ -1,11 +1,9 @@
-"""Página da reunião: a resposta de cada área, as pontes e a camada única."""
-
 from pathlib import Path
 
 import duckdb
 
-from ingest.formato import TRACO, mes_extenso, numero, pct, reais
-from ingest.pontes import (
+from reconcile.formato import TRACO, mes_extenso, numero, pct, reais
+from reconcile.pontes import (
     AREAS,
     PonteReceita,
     camada_unica,

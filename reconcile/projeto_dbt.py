@@ -1,17 +1,12 @@
-"""Chamadas ao dbt e ao MetricFlow.
-
-Rodam em subprocesso porque o dbt-duckdb mantém o arquivo do banco aberto no
-processo que o chama, e a leitura seguinte em modo read_only falharia.
-"""
-
 import os
 import subprocess
 import sys
 from pathlib import Path
 
-from ingest.fontes import RAIZ
+from reconcile.caminhos import RAIZ
 
 DBT_DIR = RAIZ / "dbt"
+TEMPO_MAXIMO = 900
 
 _DBT = [sys.executable, "-c", "from dbt.cli.main import cli; cli()"]
 _MF = [sys.executable, "-c", "from dbt_metricflow.cli.main import cli; cli()"]
@@ -42,6 +37,8 @@ def dbt(
         [*_DBT, *args, *_projeto(projeto)],
         env=_ambiente(db_path),
         capture_output=silencioso,
+        stdin=subprocess.DEVNULL,
+        timeout=TEMPO_MAXIMO,
     )
 
 
@@ -51,6 +48,8 @@ def mf(db_path: Path, *args: str) -> subprocess.CompletedProcess:
         [*_MF, *args],
         cwd=DBT_DIR,
         env=_ambiente(db_path),
+        stdin=subprocess.DEVNULL,
+        timeout=TEMPO_MAXIMO,
         capture_output=True,
         text=True,
         encoding="utf-8",

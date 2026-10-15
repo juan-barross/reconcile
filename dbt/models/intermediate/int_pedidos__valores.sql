@@ -1,5 +1,3 @@
--- Itens e pagamentos são agregados antes do join; juntar direto multiplica linhas.
-
 with itens as (
     select
         order_id,
@@ -28,7 +26,6 @@ select
     o.purchased_at,
     o.approved_at,
     o.delivered_to_customer_at,
-    -- receita paga: data de aprovação, ou da compra quando nula
     coalesce(o.approved_at, o.purchased_at) as receita_paga_em,
     coalesce(i.n_itens, 0) as n_itens,
     coalesce(i.valor_itens, 0) as valor_itens,
@@ -37,7 +34,6 @@ select
     coalesce(p.n_pagamentos, 0) as n_pagamentos,
     coalesce(p.valor_pago, 0) as valor_pago,
     p.max_parcelas,
-    -- pedido válido (docs/contrato_de_metricas.md)
     (
         o.order_status not in ('canceled', 'unavailable')
         and coalesce(i.n_itens, 0) > 0

@@ -1,6 +1,3 @@
--- Financeiro: receita = pagamentos (com juros) no mês da aprovação.
--- Sem aprovação não entra; o status do pedido não é olhado.
-
 select
     'financeiro' as area,
     'receita' as pergunta,

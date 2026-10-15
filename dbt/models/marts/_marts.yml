@@ -1,9 +1,5 @@
 version: 2
 
-# Todos os marts têm contrato enforced: o dbt recusa o build se o SQL devolver
-# uma coluna a mais, a menos ou com outro tipo. `meta.metricas` liga cada mart
-# às métricas de docs/contrato_de_metricas.md que ele sustenta.
-
 models:
   - name: fct_pedidos
     description: >

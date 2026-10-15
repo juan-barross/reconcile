@@ -1,9 +1,7 @@
-"""A camada semântica tem que dar exatamente o número da camada única (marts)."""
-
 import duckdb
 import pytest
 
-from ingest import pontes, semantica
+from reconcile import pontes, semantica
 
 
 @pytest.mark.parametrize("mes", ["2018-01", "2018-02", "2018-03"])

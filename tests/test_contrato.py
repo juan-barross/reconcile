@@ -1,11 +1,9 @@
-"""docs/contrato_de_metricas.md, os marts e a camada semântica listam as mesmas métricas."""
-
 import re
 
 import yaml
 
-from ingest.fontes import RAIZ
-from ingest.semantica import METRICAS
+from reconcile.caminhos import RAIZ
+from reconcile.semantica import METRICAS
 
 CONTRATO = RAIZ / "docs" / "contrato_de_metricas.md"
 MARTS_YML = RAIZ / "dbt" / "models" / "marts" / "_marts.yml"

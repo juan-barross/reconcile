@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from analysis.valor_por_lead import (
+from reconcile.valor_por_lead import (
     Canal,
     encolher_medias,
     encolher_proporcoes,
@@ -11,8 +11,7 @@ from analysis.valor_por_lead import (
 
 
 def test_kaplan_meier_confere_com_a_conta_a_mao():
-    # 5 contratos: vendas nos dias 10 e 20, censurados nos dias 15, 30 e 40.
-    # Em 10: 1 de 5 vende -> S = 0,8. Em 20: 1 de 3 em risco -> S = 0,8 * 2/3.
+
     tempos = np.array([10, 15, 20, 30, 40], dtype=float)
     eventos = np.array([True, False, True, False, False])
     ativado = kaplan_meier(tempos, eventos, (5, 10, 25))
@@ -29,7 +28,7 @@ def test_encolhimento_nao_mexe_quando_os_canais_sao_iguais():
 
 def test_encolhimento_puxa_mais_o_canal_pequeno():
     x = np.array([300.0, 280.0, 2.0])
-    n = np.array([1000.0, 2000.0, 5.0])  # o terceiro tem 40% com só 5 leads
+    n = np.array([1000.0, 2000.0, 5.0])
     p = encolher_proporcoes(x, n)
     bruto = x / n
     assert abs(p[2] - bruto[2]) > abs(p[0] - bruto[0])
@@ -43,7 +42,7 @@ def test_media_encolhida_fica_entre_a_bruta_e_a_geral():
     geral = np.concatenate(amostras).mean()
     for a, m in zip(amostras, medias, strict=True):
         assert min(a.mean(), geral) - 1e-9 <= m <= max(a.mean(), geral) + 1e-9
-    # quem tem menos dados anda proporcionalmente mais em direção à média geral
+
     andou = [
         abs(a.mean() - m) / abs(a.mean() - geral) for a, m in zip(amostras, medias, strict=True)
     ]

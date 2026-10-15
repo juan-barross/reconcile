@@ -1,5 +1,3 @@
-"""Formatação de números no padrão brasileiro para os relatórios."""
-
 TRACO = "—"
 _MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
 _BR = str.maketrans(",.", ".,")
@@ -18,6 +16,10 @@ def reais(valor: float | None, casas: int = 2, sinal: bool = False) -> str:
     if sinal:
         return f"{'+' if valor >= 0 else '−'} {texto}"
     return f"−{texto}" if valor < 0 else texto
+
+
+def milhoes(valor: float, casas: int = 1) -> str:
+    return f"R$ {numero(valor / 1e6, casas)} mi"
 
 
 def pct(fracao: float, casas: int = 1) -> str:

@@ -1,10 +1,3 @@
-"""Reintroduz cada causa de divergência numa cópia do banco e do projeto dbt e
-registra qual teste falha.
-
-Um cenário altera o dado bruto (SQL em raw), o código de um modelo (troca de
-trecho num .sql) ou nada, no caso do controle.
-"""
-
 import json
 import shutil
 import tempfile
@@ -14,8 +7,8 @@ from pathlib import Path
 
 import duckdb
 
-from ingest import projeto_dbt
-from ingest.formato import numero
+from reconcile import projeto_dbt
+from reconcile.formato import numero
 
 INT_PEDIDOS = "models/intermediate/int_pedidos__valores.sql"
 
@@ -25,7 +18,7 @@ class Cenario:
     nome: str
     o_que_mudou: str
     sql_raw: tuple[str, ...] = ()
-    trocas: tuple[tuple[str, str, str], ...] = ()  # (arquivo, trecho original, trecho novo)
+    trocas: tuple[tuple[str, str, str], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -100,7 +93,7 @@ def _falhas(run_results: Path) -> list[Falha]:
 
 
 def rodar(cenario: Cenario, db_origem: Path) -> list[Falha]:
-    projeto_dbt.instalar_pacotes()  # a cópia do projeto precisa levar os pacotes
+    projeto_dbt.instalar_pacotes()
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         db = tmp / "olist.duckdb"

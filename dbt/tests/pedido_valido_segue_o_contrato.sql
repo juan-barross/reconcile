@@ -1,5 +1,3 @@
--- Regra de pedido válido do contrato; pedido não válido não carrega receita.
-
 select
     order_id,
     status,

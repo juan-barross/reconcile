@@ -1,14 +1,8 @@
-"""Respostas de cada área e as pontes que explicam a diferença entre elas.
-
-Cada ponte decompõe a diferença entre duas respostas em causas que somam
-exatamente essa diferença; `fecha()` confere a soma.
-"""
-
 from dataclasses import dataclass, fields
 
 import duckdb
 
-from ingest.fontes import RAIZ
+from reconcile.caminhos import RAIZ
 
 DEPARTAMENTOS = RAIZ / "departamentos"
 AREAS = ("marketing", "vendas", "financeiro", "operacao")
@@ -18,7 +12,6 @@ Respostas = dict[tuple[str, str, str], float]
 
 
 def respostas(con: duckdb.DuckDBPyConnection) -> Respostas:
-    """(area, pergunta, mes) -> valor, pela consulta de cada área em departamentos/."""
     saida: Respostas = {}
     for area in AREAS:
         sql = (DEPARTAMENTOS / f"{area}.sql").read_text(encoding="utf-8")
@@ -34,8 +27,6 @@ def total(r: Respostas, area: str, pergunta: str, mes: str | None = None) -> flo
 
 @dataclass(frozen=True)
 class PonteReceita:
-    """Vendas (itens + frete, data da compra) até financeiro (pagamentos, aprovação)."""
-
     vendas: float
     sem_aprovacao: float
     sem_pagamento: float
@@ -70,7 +61,6 @@ class PonteReceita:
         return abs(soma - self.financeiro) <= tolerancia
 
 
-# (agregação, condição) na ordem dos campos de PonteReceita, sem o financeiro.
 _COMPONENTES_RECEITA = [
     ("sum(vi)", "true"),
     ("sum(vi)", "not aprovado"),
@@ -119,7 +109,7 @@ def ponte_receita(con: duckdb.DuckDBPyConnection, mes: str | None = None) -> Pon
         f"coalesce({agg} filter (where ({cond}) and {no_periodo}), 0)"
         for agg, cond in _COMPONENTES_RECEITA
     ]
-    # O financeiro do mês conta pela aprovação, não pela compra.
+
     colunas.append(
         "coalesce(sum(vp) filter (where aprovado and mes_aprovacao = $mes), 0)"
         if mes
@@ -168,8 +158,6 @@ def ponte_lojistas(con: duckdb.DuckDBPyConnection) -> PonteLojistas:
 
 @dataclass(frozen=True)
 class PonteLojistasMes:
-    """Marketing (mês do contato) -> vendas (mês do contrato) -> operação (primeira venda)."""
-
     mes: str
     marketing: int
     contato_no_mes_fechou_em_outro: int
@@ -258,10 +246,11 @@ def ponte_clientes(con: duckdb.DuckDBPyConnection) -> PonteClientes:
 
 
 def camada_unica(con: duckdb.DuckDBPyConnection, mes: str) -> dict[str, float]:
-    """Número oficial de cada métrica do contrato no mês, lido só dos marts."""
     linha = con.execute(
         """
         select
+            (select count(*) from marts.dim_leads
+             where strftime(primeiro_contato_em, '%Y-%m') = $mes),
             (select count(*) from marts.fct_jornada_lojista
              where strftime(contratado_em, '%Y-%m') = $mes),
             (select count(*) from marts.fct_jornada_lojista
@@ -278,6 +267,7 @@ def camada_unica(con: duckdb.DuckDBPyConnection, mes: str) -> dict[str, float]:
         {"mes": mes},
     ).fetchone()
     nomes = (
+        "leads",
         "lojistas_contratados",
         "lojistas_ativados",
         "clientes_novos",

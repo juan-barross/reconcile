@@ -27,8 +27,6 @@ jobs:
       - name: Testes Python
         run: uv run pytest -q
 
-      # A licença da Olist não permite redistribuir o dado, então a CI roda
-      # o pipeline inteiro sobre a amostra sintética com anomalias plantadas.
       - name: Pipeline na amostra (carga, auditoria, dbt build)
         run: uv run reconcile --amostra tudo
 

@@ -1,6 +1,3 @@
--- Operação: lojista conquistado = contratado com primeira venda, no mês dela.
--- Cliente novo = pessoa (customer_unique_id) no mês da primeira compra.
-
 with primeira_venda as (
     select
         i.seller_id,

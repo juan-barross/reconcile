@@ -12,7 +12,6 @@ analysis-paths: ["analyses"]
 clean-targets: ["target", "dbt_packages"]
 
 vars:
-  # Último dia com volume normal de pedidos (ver docs/contrato_de_metricas.md).
   fim_observacao: "2018-08-31"
 
 flags:

@@ -1,6 +1,3 @@
--- Marketing: lojista conquistado = lead que virou contrato, no mês do primeiro contato.
--- Cliente novo = customer_id distinto no mês da compra.
-
 select
     'marketing' as area,
     'lojistas conquistados' as pergunta,

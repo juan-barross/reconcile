@@ -1,5 +1,3 @@
--- Receita e ativados da jornada batem com os itens dos lojistas contratados.
-
 with jornada as (
     select
         sum(receita_bruta_acumulada) as receita,
