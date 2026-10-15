@@ -114,7 +114,7 @@ Do relatório completo em [docs/auditoria.md](docs/auditoria.md):
 - **A amostra também era irreal em outros pontos.** Os testes dos marts pegaram lojistas vendendo antes de assinar contrato (no dado real não há nenhum caso) e juros que pesavam mais de 1% da receita. Os modelos estavam certos; a amostra foi ajustada.
 - **Janela de 12 meses impossível.** A jornada nasceu com receita em 12 meses, mas nenhum contrato tem 12 meses observados: o mais antigo é de dez/2017 e a base termina em ago/2018. A janela virou 180 dias.
 - **O dbt segurava o arquivo.** Rodar o dbt dentro do mesmo processo Python deixava a conexão do DuckDB aberta e a leitura seguinte falhava. O CLI passou a rodar o dbt em subprocesso.
-- **A primeira CI no GitHub falhou** por uma regra de estilo SQL (`group by` misturando nome e posição) que eu não tinha rodado localmente nos marts novos.
+- **A CI falhou duas vezes no GitHub e passava na minha máquina.** Na primeira, por uma regra de estilo SQL que eu não tinha rodado nos marts novos. Na segunda, porque `reconcile quebrar` copiava o projeto dbt antes de instalar os pacotes; localmente eles já estavam instalados. Reproduzi escondendo `dbt_packages` e agora toda chamada ao dbt passa por um módulo só, que instala os pacotes antes.
 - **BOM no CSV.** O CSV de categorias da Olist começa com BOM; o teste que compara a amostra com o dado real achou.
 
 ## Decisões
