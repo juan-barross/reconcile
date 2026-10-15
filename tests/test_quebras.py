@@ -1,9 +1,4 @@
-"""Toda quebra plantada tem que derrubar pelo menos um teste do dbt.
-
-Roda dois cenários na amostra (cada um é um dbt build inteiro numa cópia):
-o controle, que não pode falhar, e a troca da chave de cliente, que já passou
-calada uma vez quando a amostra não tinha recompra em pedido válido.
-"""
+"""Cada cenário é um dbt build inteiro numa cópia, então só dois rodam aqui."""
 
 from ingest.quebras import CENARIOS, rodar
 

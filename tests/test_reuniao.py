@@ -11,9 +11,8 @@ def con(db_amostra_staging):
 
 
 def _meses(con):
-    return [m for (m,) in con.execute(
-        "select distinct strftime(purchased_at, '%Y-%m') from staging.stg_olist__orders order by 1"
-    ).fetchall()]  # fmt: skip
+    sql = "select distinct strftime(purchased_at, '%Y-%m') from staging.stg_olist__orders"
+    return sorted(m for (m,) in con.execute(sql).fetchall())
 
 
 def test_ponte_de_receita_fecha_na_base_e_em_cada_mes(con):

@@ -1,16 +1,12 @@
-"""O contrato de métricas e o dbt não podem se desencontrar.
-
-Toda métrica de docs/contrato_de_metricas.md precisa de um mart que a declare
-em `meta.metricas` e de pelo menos um teste nesse mart. E todo mart só pode
-declarar métricas que existem no contrato.
-"""
+"""docs/contrato_de_metricas.md, os marts e a camada semântica listam as mesmas métricas."""
 
 import re
-from pathlib import Path
 
 import yaml
 
-RAIZ = Path(__file__).resolve().parent.parent
+from ingest.fontes import RAIZ
+from ingest.semantica import METRICAS
+
 CONTRATO = RAIZ / "docs" / "contrato_de_metricas.md"
 MARTS_YML = RAIZ / "dbt" / "models" / "marts" / "_marts.yml"
 TESTES_SQL = RAIZ / "dbt" / "tests"
@@ -35,11 +31,8 @@ def tem_teste(mart: dict) -> bool:
     return any(ref in p.read_text(encoding="utf-8") for p in TESTES_SQL.glob("*.sql"))
 
 
-def test_contrato_tem_as_oito_metricas():
-    assert metricas_do_contrato() == {
-        "leads", "lojistas_contratados", "lojistas_ativados", "pedidos_validos",
-        "clientes_novos", "receita_bruta", "receita_paga", "ticket_medio",
-    }  # fmt: skip
+def test_contrato_e_camada_semantica_tem_as_mesmas_metricas():
+    assert metricas_do_contrato() == set(METRICAS)
 
 
 def test_toda_metrica_tem_um_mart_testado():
