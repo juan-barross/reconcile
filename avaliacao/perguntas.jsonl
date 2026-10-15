@@ -1,0 +1,48 @@
+{"pergunta": "Quantos leads chegaram em janeiro de 2018?", "metrica": "leads", "mes": "2018-01", "esperado": 1141.0}
+{"pergunta": "Quantos lojistas a Olist conquistou em janeiro de 2018?", "metrica": "lojistas_contratados", "mes": "2018-01", "esperado": 73.0}
+{"pergunta": "Quantos lojistas começaram a vender em janeiro de 2018?", "metrica": "lojistas_ativados", "mes": "2018-01", "esperado": 3.0}
+{"pergunta": "Quantos pedidos a Olist teve em janeiro de 2018?", "metrica": "pedidos_validos", "mes": "2018-01", "esperado": 7187.0}
+{"pergunta": "Quantos clientes novos a Olist teve em janeiro de 2018?", "metrica": "clientes_novos", "mes": "2018-01", "esperado": 6951.0}
+{"pergunta": "Qual foi a receita de vendas em janeiro de 2018?", "metrica": "receita_bruta", "mes": "2018-01", "esperado": 1101920.01}
+{"pergunta": "Quanto a Olist recebeu em pagamentos em janeiro de 2018?", "metrica": "receita_paga", "mes": "2018-01", "esperado": 1094109.12}
+{"pergunta": "Qual foi o ticket médio em janeiro de 2018?", "metrica": "ticket_medio", "mes": "2018-01", "esperado": 153.32}
+{"pergunta": "Quantos leads chegaram em fevereiro de 2018?", "metrica": "leads", "mes": "2018-02", "esperado": 1028.0}
+{"pergunta": "Quantos lojistas a Olist conquistou em fevereiro de 2018?", "metrica": "lojistas_contratados", "mes": "2018-02", "esperado": 113.0}
+{"pergunta": "Quantos lojistas começaram a vender em fevereiro de 2018?", "metrica": "lojistas_ativados", "mes": "2018-02", "esperado": 27.0}
+{"pergunta": "Quantos pedidos a Olist teve em fevereiro de 2018?", "metrica": "pedidos_validos", "mes": "2018-02", "esperado": 6624.0}
+{"pergunta": "Quantos clientes novos a Olist teve em fevereiro de 2018?", "metrica": "clientes_novos", "mes": "2018-02", "esperado": 6356.0}
+{"pergunta": "Qual foi a receita de vendas em fevereiro de 2018?", "metrica": "receita_bruta", "mes": "2018-02", "esperado": 979486.16}
+{"pergunta": "Quanto a Olist recebeu em pagamentos em fevereiro de 2018?", "metrica": "receita_paga", "mes": "2018-02", "esperado": 971936.33}
+{"pergunta": "Qual foi o ticket médio em fevereiro de 2018?", "metrica": "ticket_medio", "mes": "2018-02", "esperado": 147.87}
+{"pergunta": "Quantos leads chegaram em março de 2018?", "metrica": "leads", "mes": "2018-03", "esperado": 1174.0}
+{"pergunta": "Quantos lojistas a Olist conquistou em março de 2018?", "metrica": "lojistas_contratados", "mes": "2018-03", "esperado": 147.0}
+{"pergunta": "Quantos lojistas começaram a vender em março de 2018?", "metrica": "lojistas_ativados", "mes": "2018-03", "esperado": 25.0}
+{"pergunta": "Quantos pedidos a Olist teve em março de 2018?", "metrica": "pedidos_validos", "mes": "2018-03", "esperado": 7168.0}
+{"pergunta": "Quantos clientes novos a Olist teve em março de 2018?", "metrica": "clientes_novos", "mes": "2018-03", "esperado": 6931.0}
+{"pergunta": "Qual foi a receita de vendas em março de 2018?", "metrica": "receita_bruta", "mes": "2018-03", "esperado": 1152656.99}
+{"pergunta": "Quanto a Olist recebeu em pagamentos em março de 2018?", "metrica": "receita_paga", "mes": "2018-03", "esperado": 1164078.78}
+{"pergunta": "Qual foi o ticket médio em março de 2018?", "metrica": "ticket_medio", "mes": "2018-03", "esperado": 160.81}
+{"pergunta": "Quantos leads chegaram em abril de 2018?", "metrica": "leads", "mes": "2018-04", "esperado": 1352.0}
+{"pergunta": "Quantos lojistas a Olist conquistou em abril de 2018?", "metrica": "lojistas_contratados", "mes": "2018-04", "esperado": 207.0}
+{"pergunta": "Quantos lojistas começaram a vender em abril de 2018?", "metrica": "lojistas_ativados", "mes": "2018-04", "esperado": 62.0}
+{"pergunta": "Quantos pedidos a Olist teve em abril de 2018?", "metrica": "pedidos_validos", "mes": "2018-04", "esperado": 6919.0}
+{"pergunta": "Quantos clientes novos a Olist teve em abril de 2018?", "metrica": "clientes_novos", "mes": "2018-04", "esperado": 6698.0}
+{"pergunta": "Qual foi a receita de vendas em abril de 2018?", "metrica": "receita_bruta", "mes": "2018-04", "esperado": 1156248.89}
+{"pergunta": "Quanto a Olist recebeu em pagamentos em abril de 2018?", "metrica": "receita_paga", "mes": "2018-04", "esperado": 1133265.8}
+{"pergunta": "Qual foi o ticket médio em abril de 2018?", "metrica": "ticket_medio", "mes": "2018-04", "esperado": 167.11}
+{"pergunta": "Quantos leads chegaram em maio de 2018?", "metrica": "leads", "mes": "2018-05", "esperado": 1303.0}
+{"pergunta": "Quantos lojistas a Olist conquistou em maio de 2018?", "metrica": "lojistas_contratados", "mes": "2018-05", "esperado": 122.0}
+{"pergunta": "Quantos lojistas começaram a vender em maio de 2018?", "metrica": "lojistas_ativados", "mes": "2018-05", "esperado": 81.0}
+{"pergunta": "Quantos pedidos a Olist teve em maio de 2018?", "metrica": "pedidos_validos", "mes": "2018-05", "esperado": 6833.0}
+{"pergunta": "Quantos clientes novos a Olist teve em maio de 2018?", "metrica": "clientes_novos", "mes": "2018-05", "esperado": 6586.0}
+{"pergunta": "Qual foi a receita de vendas em maio de 2018?", "metrica": "receita_bruta", "mes": "2018-05", "esperado": 1145686.46}
+{"pergunta": "Quanto a Olist recebeu em pagamentos em maio de 2018?", "metrica": "receita_paga", "mes": "2018-05", "esperado": 1171843.38}
+{"pergunta": "Qual foi o ticket médio em maio de 2018?", "metrica": "ticket_medio", "mes": "2018-05", "esperado": 167.67}
+{"pergunta": "Quantos leads chegaram em junho de 2018?", "metrica": "leads", "mes": "2018-06", "esperado": 0.0}
+{"pergunta": "Quantos lojistas a Olist conquistou em junho de 2018?", "metrica": "lojistas_contratados", "mes": "2018-06", "esperado": 57.0}
+{"pergunta": "Quantos lojistas começaram a vender em junho de 2018?", "metrica": "lojistas_ativados", "mes": "2018-06", "esperado": 82.0}
+{"pergunta": "Quantos pedidos a Olist teve em junho de 2018?", "metrica": "pedidos_validos", "mes": "2018-06", "esperado": 6145.0}
+{"pergunta": "Quantos clientes novos a Olist teve em junho de 2018?", "metrica": "clientes_novos", "mes": "2018-06", "esperado": 5920.0}
+{"pergunta": "Qual foi a receita de vendas em junho de 2018?", "metrica": "receita_bruta", "mes": "2018-06", "esperado": 1020381.9}
+{"pergunta": "Quanto a Olist recebeu em pagamentos em junho de 2018?", "metrica": "receita_paga", "mes": "2018-06", "esperado": 1024631.63}
+{"pergunta": "Qual foi o ticket médio em junho de 2018?", "metrica": "ticket_medio", "mes": "2018-06", "esperado": 166.05}
