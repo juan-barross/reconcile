@@ -1,6 +1,6 @@
 # ADR 0003: Metabase como BI, lendo só os marts
 
-- **Status:** aceita
+- **Status:** substituída pela [ADR 0004](0004-painel-estatico-no-lugar-do-metabase.md)
 - **Data:** 2026-10-10
 
 ## Contexto
