@@ -1,12 +1,7 @@
 """Amostra sintética no formato exato dos CSVs da Olist.
 
-Serve para três coisas: os testes rodarem sem rede, a CI rodar `dbt build` sem
-redistribuir o dado real (a licença não permite) e quem avalia o projeto ver o
-pipeline inteiro em segundos.
-
-Os valores são inventados. As anomalias são plantadas em quantidade conhecida
-(ver PLANTADAS) para que os testes confiram que a auditoria e os modelos as
-encontram.
+Usada pelos testes e pela CI, que não podem redistribuir o dado real. Os valores
+são inventados e as anomalias são plantadas em quantidade conhecida (PLANTADAS).
 """
 
 import csv
@@ -15,7 +10,6 @@ from pathlib import Path
 
 from ingest.fontes import FONTES
 
-# O que a auditoria tem de achar na amostra. Os testes usam estes números.
 PLANTADAS = {
     "customer_id a mais que pessoas (customer_unique_id)": 4,
     "pedidos sem nenhum item": 2,
@@ -30,158 +24,147 @@ PLANTADAS = {
     "produtos sem categoria": 1,
 }
 
-CABECALHOS = {
-    "customers": [
-        "customer_id", "customer_unique_id", "customer_zip_code_prefix",
-        "customer_city", "customer_state",
-    ],
-    "geolocation": [
-        "geolocation_zip_code_prefix", "geolocation_lat", "geolocation_lng",
-        "geolocation_city", "geolocation_state",
-    ],
-    "orders": [
-        "order_id", "customer_id", "order_status", "order_purchase_timestamp",
-        "order_approved_at", "order_delivered_carrier_date",
-        "order_delivered_customer_date", "order_estimated_delivery_date",
-    ],
-    "order_items": [
-        "order_id", "order_item_id", "product_id", "seller_id",
-        "shipping_limit_date", "price", "freight_value",
-    ],
-    "order_payments": [
-        "order_id", "payment_sequential", "payment_type", "payment_installments",
-        "payment_value",
-    ],
-    "order_reviews": [
-        "review_id", "order_id", "review_score", "review_comment_title",
-        "review_comment_message", "review_creation_date", "review_answer_timestamp",
-    ],
-    "products": [
-        "product_id", "product_category_name", "product_name_lenght",
-        "product_description_lenght", "product_photos_qty", "product_weight_g",
-        "product_length_cm", "product_height_cm", "product_width_cm",
-    ],
-    "sellers": ["seller_id", "seller_zip_code_prefix", "seller_city", "seller_state"],
-    "product_category_translation": [
-        "product_category_name", "product_category_name_english",
-    ],
-    "marketing_qualified_leads": ["mql_id", "first_contact_date", "landing_page_id", "origin"],
-    "closed_deals": [
-        "mql_id", "seller_id", "sdr_id", "sr_id", "won_date", "business_segment",
-        "lead_type", "lead_behaviour_profile", "has_company", "has_gtin",
-        "average_stock", "business_type", "declared_product_catalog_size",
-        "declared_monthly_revenue",
-    ],
-}  # fmt: skip
+_COLUNAS = {
+    "customers": "customer_id customer_unique_id customer_zip_code_prefix customer_city "
+    "customer_state",
+    "geolocation": "geolocation_zip_code_prefix geolocation_lat geolocation_lng "
+    "geolocation_city geolocation_state",
+    "orders": "order_id customer_id order_status order_purchase_timestamp order_approved_at "
+    "order_delivered_carrier_date order_delivered_customer_date order_estimated_delivery_date",
+    "order_items": "order_id order_item_id product_id seller_id shipping_limit_date price "
+    "freight_value",
+    "order_payments": "order_id payment_sequential payment_type payment_installments payment_value",
+    "order_reviews": "review_id order_id review_score review_comment_title "
+    "review_comment_message review_creation_date review_answer_timestamp",
+    "products": "product_id product_category_name product_name_lenght "
+    "product_description_lenght product_photos_qty product_weight_g product_length_cm "
+    "product_height_cm product_width_cm",
+    "sellers": "seller_id seller_zip_code_prefix seller_city seller_state",
+    "product_category_translation": "product_category_name product_category_name_english",
+    "marketing_qualified_leads": "mql_id first_contact_date landing_page_id origin",
+    "closed_deals": "mql_id seller_id sdr_id sr_id won_date business_segment lead_type "
+    "lead_behaviour_profile has_company has_gtin average_stock business_type "
+    "declared_product_catalog_size declared_monthly_revenue",
+}
+CABECALHOS = {tabela: colunas.split() for tabela, colunas in _COLUNAS.items()}
 
-TS = "%Y-%m-%d %H:%M:%S"
+INICIO_FUNIL = datetime(2017, 11, 1)  # todo contrato é anterior à primeira venda
+INICIO_VENDAS = datetime(2018, 1, 1, 10)
+N_PEDIDOS = 30
+
+PEDIDO_ENVIO_ANTES_DA_COMPRA = 3
+PEDIDO_SEM_PAGAMENTO = 7  # barato, como no dado real
+PEDIDOS_COM_JUROS = (5, 10, 15)
+PEDIDO_COM_VOUCHER_ZERADO = 12
+PEDIDOS_CANCELADOS_COM_ITENS = (27, 28)
+PEDIDOS_SEM_ITENS = {29: "unavailable", 30: "canceled"}
+# Recompra em pedido válido: sem isso, trocar a chave de cliente para
+# customer_id não mudaria nenhum número e passaria despercebido.
+CLIENTES_QUE_VOLTAM = range(21, 25)
+
+FMT = "%Y-%m-%d %H:%M:%S"
 
 
 def _ts(d: datetime | None) -> str:
-    return d.strftime(TS) if d else ""
+    return d.strftime(FMT) if d else ""
 
 
-def gerar() -> dict[str, list[list[str]]]:
-    """Monta as linhas de cada tabela. Determinístico: sem aleatoriedade."""
-    t: dict[str, list[list[str]]] = {nome: [] for nome in CABECALHOS}
+def _dia(d: datetime) -> str:
+    return d.strftime("%Y-%m-%d 00:00:00")
 
-    # Categorias e produtos: p5 sem categoria
-    t["product_category_translation"] = [
+
+def _catalogo(t: dict) -> None:
+    t["product_category_translation"] += [
         ["beleza_saude", "health_beauty"],
         ["esporte_lazer", "sports_leisure"],
         ["informatica_acessorios", "computers_accessories"],
     ]
-    cats = ["beleza_saude", "esporte_lazer", "informatica_acessorios", "beleza_saude", ""]
-    for i, cat in enumerate(cats, 1):
-        t["products"].append([f"p{i}", cat, "40", "300", "2", "500", "20", "10", "15"])
-
-    # Lojistas que venderam: s1..s4. s5 e s6 só têm contrato.
+    categorias = ["beleza_saude", "esporte_lazer", "informatica_acessorios", "beleza_saude", ""]
+    for i, categoria in enumerate(categorias, 1):
+        t["products"].append([f"p{i}", categoria, "40", "300", "2", "500", "20", "10", "15"])
     for i in range(1, 5):
         t["sellers"].append([f"s{i}", f"0{i}000", "sao paulo", "SP"])
         t["geolocation"].append([f"0{i}000", "-23.5", "-46.6", "sao paulo", "SP"])
 
-    # Leads: 10, um sem origem e um 'unknown'
-    origens = [
-        "organic_search", "paid_search", "social", "organic_search", "email",
-        "paid_search", "", "unknown", "referral", "direct_traffic",
-    ]  # fmt: skip
-    # O funil começa antes das vendas: lojista contratado só vende depois do
-    # contrato, como no dado real (nenhum caso ao contrário).
-    inicio_funil = datetime(2017, 11, 1)
-    for i, origem in enumerate(origens, 1):
-        contato = (inicio_funil + timedelta(days=7 * i)).date().isoformat()
-        t["marketing_qualified_leads"].append([f"m{i:02d}", contato, f"lp{i % 3}", origem])
 
-    # Contratos: m01->s1, m02->s2, m03->s5 e m04->s6 (s5 e s6 nunca vendem)
-    for mql, seller, dias in [("m01", "s1", 10), ("m02", "s2", 12), ("m03", "s5", 30),
-                              ("m04", "s6", 40)]:  # fmt: skip
-        n = int(mql[1:])
-        won = inicio_funil + timedelta(days=7 * n + dias, hours=14)
-        t["closed_deals"].append([
-            mql, seller, "sdr1", "sr1", _ts(won), "health_beauty", "online_medium",
-            "cat", "", "", "", "reseller", "", "0.0",
-        ])  # fmt: skip
+def _funil(t: dict) -> None:
+    origens = "organic_search paid_search social organic_search email paid_search - unknown "
+    origens += "referral direct_traffic"
+    for i, origem in enumerate(origens.split(), 1):
+        contato = (INICIO_FUNIL + timedelta(days=7 * i)).date().isoformat()
+        t["marketing_qualified_leads"].append(
+            [f"m{i:02d}", contato, f"lp{i % 3}", "" if origem == "-" else origem]
+        )
+    # s5 e s6 assinam e nunca vendem.
+    for n, seller, dias in [(1, "s1", 10), (2, "s2", 12), (3, "s5", 30), (4, "s6", 40)]:
+        fechado = INICIO_FUNIL + timedelta(days=7 * n + dias, hours=14)
+        t["closed_deals"].append(
+            [f"m{n:02d}", seller, "sdr1", "sr1", _ts(fechado), "health_beauty",
+             "online_medium", "cat", "", "", "", "reseller", "", "0.0"]
+        )  # fmt: skip
 
-    # Clientes: 30 customer_ids, 26 pessoas. u01..u04 voltam a comprar em c21..c24,
-    # pedidos válidos: se a recompra caísse num pedido cancelado, trocar a chave de
-    # cliente para customer_id não mudaria nenhum número e passaria calado.
-    for i in range(1, 31):
-        pessoa = f"u{i - 20:02d}" if 21 <= i <= 24 else f"u{i:02d}"
-        t["customers"].append([f"c{i:02d}", pessoa, "01000", "sao paulo", "SP"])
 
-    # Pedidos: 30. o29 e o30 sem itens (indisponível e cancelado), mas pagos.
-    for i in range(1, 31):
-        compra = datetime(2018, 1, 1, 10) + timedelta(days=5 * i)
-        status = "delivered"
-        aprov = compra + timedelta(hours=2)
-        carrier = compra + timedelta(days=1)
-        entrega = compra + timedelta(days=6)
-        if i == 3:  # envio antes da compra
-            carrier = compra - timedelta(days=1)
-        if i in (27, 28):  # cancelados com itens e pagamento
-            status, carrier, entrega = "canceled", None, None
-        if i == 29:
-            status, carrier, entrega = "unavailable", None, None
-        if i == 30:
-            status, carrier, entrega = "canceled", None, None
-        estimada = (compra + timedelta(days=15)).date().isoformat() + " 00:00:00"
-        t["orders"].append([
-            f"o{i:02d}", f"c{i:02d}", status, _ts(compra), _ts(aprov), _ts(carrier),
-            _ts(entrega), estimada,
-        ])  # fmt: skip
+def _clientes(t: dict) -> None:
+    for i in range(1, N_PEDIDOS + 1):
+        pessoa = i - 20 if i in CLIENTES_QUE_VOLTAM else i
+        t["customers"].append([f"c{i:02d}", f"u{pessoa:02d}", "01000", "sao paulo", "SP"])
 
-        if i >= 29:
-            t["order_payments"].append([f"o{i:02d}", "1", "credit_card", "1", "80.00"])
-            continue
-        valores = []
-        for item in range(1, 3 if i % 4 == 0 else 2):
-            # o07 (o pedido sem pagamento) é barato, como no dado real, para não
-            # distorcer a receita paga de uma amostra de 30 pedidos
-            preco, frete = (15, 5) if i == 7 else (200 + i, 10)
-            valores.append(preco + frete)
-            t["order_items"].append([
-                f"o{i:02d}", str(item), f"p{(i + item) % 5 + 1}", f"s{(i + item) % 4 + 1}",
-                _ts(compra + timedelta(days=3)), f"{preco:.2f}", f"{frete:.2f}",
-            ])  # fmt: skip
 
-        total = sum(valores)
-        if i == 7:  # sem pagamento
-            pass
-        elif i in (5, 10, 15):  # juros de parcelamento
-            t["order_payments"].append([f"o{i:02d}", "1", "credit_card", "6",
-                                        f"{total * 1.02:.2f}"])  # fmt: skip
-        elif i == 12:  # cartão + voucher zerado
-            t["order_payments"].append([f"o{i:02d}", "1", "credit_card", "1", f"{total:.2f}"])
-            t["order_payments"].append([f"o{i:02d}", "2", "voucher", "1", "0.00"])
-        else:
-            t["order_payments"].append([f"o{i:02d}", "1", "boleto", "1", f"{total:.2f}"])
+def _pagamentos(pedido: str, i: int, total: float) -> list[list[str]]:
+    if i in PEDIDOS_SEM_ITENS:
+        return [[pedido, "1", "credit_card", "1", "80.00"]]
+    if i == PEDIDO_SEM_PAGAMENTO:
+        return []
+    if i in PEDIDOS_COM_JUROS:
+        return [[pedido, "1", "credit_card", "6", f"{total * 1.02:.2f}"]]
+    if i == PEDIDO_COM_VOUCHER_ZERADO:
+        return [
+            [pedido, "1", "credit_card", "1", f"{total:.2f}"],
+            [pedido, "2", "voucher", "1", "0.00"],
+        ]
+    return [[pedido, "1", "boleto", "1", f"{total:.2f}"]]
+
+
+def _pedidos(t: dict) -> None:
+    for i in range(1, N_PEDIDOS + 1):
+        pedido = f"o{i:02d}"
+        compra = INICIO_VENDAS + timedelta(days=5 * i)
+        status, envio, entrega = "delivered", compra + timedelta(days=1), compra + timedelta(6)
+        if i == PEDIDO_ENVIO_ANTES_DA_COMPRA:
+            envio = compra - timedelta(days=1)
+        if i in PEDIDOS_CANCELADOS_COM_ITENS:
+            status, envio, entrega = "canceled", None, None
+        if i in PEDIDOS_SEM_ITENS:
+            status, envio, entrega = PEDIDOS_SEM_ITENS[i], None, None
+        t["orders"].append(
+            [pedido, f"c{i:02d}", status, _ts(compra), _ts(compra + timedelta(hours=2)),
+             _ts(envio), _ts(entrega), _dia(compra + timedelta(days=15))]
+        )  # fmt: skip
+
+        total = 0.0
+        if i not in PEDIDOS_SEM_ITENS:
+            preco, frete = (15, 5) if i == PEDIDO_SEM_PAGAMENTO else (200 + i, 10)
+            for item in range(1, 3 if i % 4 == 0 else 2):
+                total += preco + frete
+                t["order_items"].append(
+                    [pedido, str(item), f"p{(i + item) % 5 + 1}", f"s{(i + item) % 4 + 1}",
+                     _ts(compra + timedelta(days=3)), f"{preco:.2f}", f"{frete:.2f}"]
+                )  # fmt: skip
+        t["order_payments"] += _pagamentos(pedido, i, total)
 
         if status == "delivered":
-            review = "r01" if i in (1, 2) else f"r{i:02d}"  # r01 aparece em dois pedidos
-            criada = (compra + timedelta(days=7)).date().isoformat() + " 00:00:00"
-            t["order_reviews"].append([review, f"o{i:02d}", str(i % 5 + 1), "", "",
-                                       criada, _ts(compra + timedelta(days=8))])  # fmt: skip
-    return t
+            review = "r01" if i in (1, 2) else f"r{i:02d}"  # o mesmo review_id em dois pedidos
+            t["order_reviews"].append(
+                [review, pedido, str(i % 5 + 1), "", "", _dia(compra + timedelta(days=7)),
+                 _ts(compra + timedelta(days=8))]
+            )  # fmt: skip
+
+
+def gerar() -> dict[str, list[list[str]]]:
+    tabelas: dict[str, list[list[str]]] = {nome: [] for nome in CABECALHOS}
+    for parte in (_catalogo, _funil, _clientes, _pedidos):
+        parte(tabelas)
+    return tabelas
 
 
 def escrever(destino: Path) -> list[Path]:
@@ -191,8 +174,8 @@ def escrever(destino: Path) -> list[Path]:
     for fonte in FONTES:
         caminho = destino / fonte.arquivo
         with caminho.open("w", newline="", encoding="utf-8") as f:
-            w = csv.writer(f)
-            w.writerow(CABECALHOS[fonte.tabela])
-            w.writerows(tabelas[fonte.tabela])
+            escritor = csv.writer(f)
+            escritor.writerow(CABECALHOS[fonte.tabela])
+            escritor.writerows(tabelas[fonte.tabela])
         caminhos.append(caminho)
     return caminhos
