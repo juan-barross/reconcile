@@ -1,18 +1,15 @@
-"""Quais arquivos baixamos, de onde, e com que nome entram na camada raw."""
+"""Arquivos de origem e onde cada execução guarda CSVs, banco e relatórios."""
 
 import os
 from dataclasses import dataclass
 from pathlib import Path
 
-DATA_DIR = Path(os.environ.get("RECONCILE_DATA_DIR", "data"))
-CSV_DIR = DATA_DIR / "csv"
-DB_PATH = DATA_DIR / "olist.duckdb"
+RAIZ = Path(__file__).resolve().parents[1]
+DATA_DIR = Path(os.environ.get("RECONCILE_DATA_DIR", RAIZ / "data"))
 
 
 @dataclass(frozen=True)
 class Caminhos:
-    """Onde ficam os CSVs e o banco. A amostra sintética mora em data/amostra."""
-
     base: Path
     amostra: bool
 
@@ -24,6 +21,14 @@ class Caminhos:
     def db_path(self) -> Path:
         return self.base / "olist.duckdb"
 
+    @property
+    def docs_dir(self) -> Path:
+        # Os relatórios do dado real são versionados em docs/; os da amostra, não.
+        return self.base if self.amostra else RAIZ / "docs"
+
+    def relatorio(self, nome: str) -> Path:
+        return self.docs_dir / nome
+
 
 def caminhos(amostra: bool = False) -> Caminhos:
     return Caminhos(DATA_DIR / "amostra" if amostra else DATA_DIR, amostra)
@@ -31,9 +36,9 @@ def caminhos(amostra: bool = False) -> Caminhos:
 
 @dataclass(frozen=True)
 class Fonte:
-    dataset: str  # handle no Kaggle
-    arquivo: str  # nome do CSV dentro do dataset
-    tabela: str  # nome da tabela em raw
+    dataset: str
+    arquivo: str
+    tabela: str
 
 
 ECOMMERCE = "olistbr/brazilian-ecommerce"

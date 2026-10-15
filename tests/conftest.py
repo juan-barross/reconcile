@@ -1,12 +1,14 @@
+import shutil
+
 import pytest
 
-from ingest import amostra
+from ingest import amostra, projeto_dbt
 from ingest.carregar import carregar
 
 
 @pytest.fixture(scope="session")
 def db_amostra(tmp_path_factory):
-    """DuckDB com a amostra sintética carregada em raw."""
+    """Amostra sintética carregada em raw."""
     pasta = tmp_path_factory.mktemp("amostra")
     amostra.escrever(pasta / "csv")
     db = pasta / "olist.duckdb"
@@ -16,12 +18,8 @@ def db_amostra(tmp_path_factory):
 
 @pytest.fixture(scope="session")
 def db_amostra_staging(db_amostra, tmp_path_factory):
-    """A amostra com todas as camadas do dbt construídas (staging a marts)."""
-    import shutil
-
-    from ingest.cli import rodar_dbt
-
-    db = tmp_path_factory.mktemp("staging") / "olist.duckdb"
+    """Amostra com todas as camadas do dbt construídas."""
+    db = tmp_path_factory.mktemp("dbt") / "olist.duckdb"
     shutil.copyfile(db_amostra, db)
-    assert rodar_dbt(db, "run", "--quiet")
+    assert projeto_dbt.dbt(db, "run", "--quiet").returncode == 0
     return db

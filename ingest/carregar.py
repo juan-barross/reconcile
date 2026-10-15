@@ -1,8 +1,7 @@
-"""Carrega os CSVs no esquema raw do DuckDB, tudo como texto.
+"""Carga dos CSVs no esquema raw, tudo como texto.
 
-A camada raw não interpreta nada: tipos, nomes e limpeza ficam no staging do
-dbt, onde são versionados e testados. Assim um CSV com data malformada entra
-inteiro e o problema aparece na auditoria, em vez de sumir num cast silencioso.
+Tipos ficam no staging do dbt. Assim uma data malformada entra inteira e aparece
+na auditoria, em vez de sumir num cast silencioso.
 """
 
 import hashlib
@@ -11,7 +10,7 @@ from pathlib import Path
 
 import duckdb
 
-from ingest.fontes import CSV_DIR, DB_PATH, FONTES, Fonte
+from ingest.fontes import FONTES, Fonte
 
 
 @dataclass(frozen=True)
@@ -25,7 +24,7 @@ class Carga:
 def _sha256(caminho: Path) -> str:
     h = hashlib.sha256()
     with caminho.open("rb") as f:
-        for bloco in iter(lambda: f.read(1 << 20), b""):
+        while bloco := f.read(1 << 20):
             h.update(bloco)
     return h.hexdigest()
 
@@ -48,7 +47,7 @@ def carregar_fonte(con: duckdb.DuckDBPyConnection, fonte: Fonte, csv_dir: Path) 
     return Carga(fonte.tabela, fonte.arquivo, linhas, _sha256(caminho))
 
 
-def carregar(csv_dir: Path = CSV_DIR, db_path: Path = DB_PATH) -> list[Carga]:
+def carregar(csv_dir: Path, db_path: Path) -> list[Carga]:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     with duckdb.connect(str(db_path)) as con:
         con.execute("create schema if not exists raw")

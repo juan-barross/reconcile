@@ -1,16 +1,16 @@
-"""Baixa os dois datasets da Olist do Kaggle e copia os CSVs para data/csv.
+"""Download dos datasets da Olist pelo kagglehub.
 
-Os datasets são públicos: o kagglehub baixa sem credencial. Se houver
-~/.kaggle/kaggle.json ou KAGGLE_USERNAME/KAGGLE_KEY, ele usa.
+Os datasets são públicos e baixam sem credencial; se houver ~/.kaggle/kaggle.json
+ou KAGGLE_USERNAME/KAGGLE_KEY, o kagglehub usa.
 """
 
 import shutil
 from pathlib import Path
 
-from ingest.fontes import CSV_DIR, FONTES
+from ingest.fontes import FONTES
 
 
-def baixar(destino: Path = CSV_DIR) -> list[Path]:
+def baixar(destino: Path) -> list[Path]:
     import kagglehub
 
     destino.mkdir(parents=True, exist_ok=True)
@@ -20,11 +20,6 @@ def baixar(destino: Path = CSV_DIR) -> list[Path]:
     for fonte in FONTES:
         origem = pastas[fonte.dataset] / fonte.arquivo
         if not origem.exists():
-            raise FileNotFoundError(
-                f"{fonte.arquivo} não veio no download de {fonte.dataset}. "
-                "O dataset mudou de versão? Confira ingest/fontes.py."
-            )
-        alvo = destino / fonte.arquivo
-        shutil.copyfile(origem, alvo)
-        copiados.append(alvo)
+            raise FileNotFoundError(f"{fonte.arquivo} não veio em {fonte.dataset}")
+        copiados.append(Path(shutil.copyfile(origem, destino / fonte.arquivo)))
     return copiados

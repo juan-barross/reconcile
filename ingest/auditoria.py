@@ -1,8 +1,7 @@
-"""Auditoria da camada raw: o que a origem tem de estranho antes de qualquer modelo.
+"""Auditoria da camada raw: chaves, órfãos, datas e valores estranhos na origem.
 
-Cada checagem é uma consulta que devolve um número. O número vai para
-docs/auditoria.md junto com a leitura de negócio, para que a decisão tomada
-no staging e no intermediate tenha uma origem rastreável.
+Cada checagem devolve um número, registrado em docs/auditoria.md ao lado da
+leitura de negócio que justifica a regra aplicada depois no dbt.
 """
 
 from dataclasses import dataclass
@@ -10,8 +9,6 @@ from datetime import date
 from pathlib import Path
 
 import duckdb
-
-from ingest.fontes import DB_PATH
 
 
 @dataclass(frozen=True)
@@ -34,7 +31,6 @@ def _orfao(filho: str, pai: str, chave: str) -> str:
 
 
 CHECAGENS: tuple[Checagem, ...] = (
-    # Chaves
     Checagem("chave", "pedidos com order_id repetido", _dup("orders", "order_id"), "Chave limpa."),
     Checagem(
         "chave",
@@ -66,7 +62,6 @@ CHECAGENS: tuple[Checagem, ...] = (
         _dup("closed_deals", "mql_id"),
         "Cada lead fecha no máximo um contrato.",
     ),
-    # Clientes
     Checagem(
         "cliente",
         "customer_id a mais que pessoas (customer_unique_id)",
@@ -81,7 +76,6 @@ CHECAGENS: tuple[Checagem, ...] = (
         "group by 1 having count(*) > 1)",
         "Clientes que voltaram a comprar. Contados uma vez por pedido se a chave for errada.",
     ),
-    # Órfãos
     Checagem(
         "órfão",
         "itens sem pedido",
@@ -120,7 +114,6 @@ CHECAGENS: tuple[Checagem, ...] = (
         "(select 1 from raw.order_items i where i.seller_id = d.seller_id)",
         "Contrato assinado que não virou lojista ativo. Vendas conta, operação não.",
     ),
-    # Datas
     Checagem(
         "data",
         "envio à transportadora antes da compra",
@@ -171,7 +164,6 @@ CHECAGENS: tuple[Checagem, ...] = (
         "Não tiveram como vender dentro da base. Entram no denominador da ativação "
         "e puxam a taxa para baixo se ninguém tratar.",
     ),
-    # Funil e pagamentos
     Checagem(
         "funil",
         "leads sem origem (nula)",
@@ -226,9 +218,13 @@ def linhas_por_tabela(con: duckdb.DuckDBPyConnection) -> list[tuple[str, int]]:
     ).fetchall()
 
 
-def rodar(db_path: Path = DB_PATH) -> list[tuple[Checagem, int]]:
+def checar(con: duckdb.DuckDBPyConnection) -> list[tuple[Checagem, int]]:
+    return [(c, con.execute(c.sql).fetchone()[0]) for c in CHECAGENS]
+
+
+def rodar(db_path: Path) -> list[tuple[Checagem, int]]:
     with duckdb.connect(str(db_path), read_only=True) as con:
-        return [(c, con.execute(c.sql).fetchone()[0]) for c in CHECAGENS]
+        return checar(con)
 
 
 def _n(x: int) -> str:
@@ -257,10 +253,9 @@ def para_markdown(resultados: list[tuple[Checagem, int]], linhas: list[tuple[str
     return "\n".join(partes)
 
 
-def auditar(db_path: Path = DB_PATH, saida: Path = Path("docs/auditoria.md")) -> Path:
-    resultados = rodar(db_path)
+def auditar(db_path: Path, saida: Path) -> Path:
     with duckdb.connect(str(db_path), read_only=True) as con:
-        linhas = linhas_por_tabela(con)
+        resultados, linhas = checar(con), linhas_por_tabela(con)
     saida.parent.mkdir(parents=True, exist_ok=True)
     saida.write_text(para_markdown(resultados, linhas), encoding="utf-8", newline="\n")
     return saida
