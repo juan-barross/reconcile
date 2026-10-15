@@ -10,6 +10,8 @@ from pathlib import Path
 
 import duckdb
 
+from ingest.formato import numero
+
 
 @dataclass(frozen=True)
 class Checagem:
@@ -227,10 +229,6 @@ def rodar(db_path: Path) -> list[tuple[Checagem, int]]:
         return checar(con)
 
 
-def _n(x: int) -> str:
-    return f"{x:,}".replace(",", ".")
-
-
 def para_markdown(resultados: list[tuple[Checagem, int]], linhas: list[tuple[str, int]]) -> str:
     partes = [
         "# Auditoria da camada raw",
@@ -241,13 +239,13 @@ def para_markdown(resultados: list[tuple[Checagem, int]], linhas: list[tuple[str
         "",
         "| tabela | linhas |",
         "|---|---:|",
-        *[f"| `{t}` | {_n(n)} |" for t, n in linhas],
+        *[f"| `{t}` | {numero(n)} |" for t, n in linhas],
         "",
         "## Checagens",
         "",
         "| categoria | checagem | resultado | leitura |",
         "|---|---|---:|---|",
-        *[f"| {c.categoria} | {c.nome} | {_n(n)} | {c.leitura} |" for c, n in resultados],
+        *[f"| {c.categoria} | {c.nome} | {numero(n)} | {c.leitura} |" for c, n in resultados],
         "",
     ]
     return "\n".join(partes)

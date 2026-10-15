@@ -1,317 +1,72 @@
-"""A reunião: cada área responde a mesma pergunta e cada diferença vira um número.
+"""Página da reunião: a resposta de cada área, as pontes e a camada única."""
 
-As respostas vêm das consultas em departamentos/, sem retoque. As pontes
-abaixo decompõem a diferença entre duas respostas em causas que somam
-exatamente a diferença; os testes conferem que a soma fecha.
-"""
-
-from dataclasses import dataclass
 from pathlib import Path
 
 import duckdb
 
-RAIZ = Path(__file__).resolve().parent.parent
-DEPARTAMENTOS = RAIZ / "departamentos"
-AREAS = ("marketing", "vendas", "financeiro", "operacao")
-
-
-def respostas(con: duckdb.DuckDBPyConnection) -> dict[tuple[str, str, str], float]:
-    """(area, pergunta, mes) -> valor, rodando cada arquivo de departamentos/."""
-    saida = {}
-    for area in AREAS:
-        sql = (DEPARTAMENTOS / f"{area}.sql").read_text(encoding="utf-8")
-        for a, pergunta, mes, valor in con.execute(sql).fetchall():
-            saida[(a, pergunta, mes)] = float(valor)
-    return saida
-
-
-def total(r: dict, area: str, pergunta: str, mes: str | None = None) -> float | None:
-    vals = [v for (a, p, m), v in r.items() if a == area and p == pergunta and mes in (None, m)]
-    return sum(vals) if vals else None
-
-
-# --- Receita: vendas (itens + frete, data da compra) contra financeiro -------
-
-_BASE_RECEITA = """
-with itens as (
-    select order_id, sum(price + freight_value) as vi
-    from staging.stg_olist__order_items group by 1
-),
-pag as (
-    select order_id, sum(payment_value) as vp, max(payment_installments) as parcelas
-    from staging.stg_olist__order_payments group by 1
+from ingest.formato import TRACO, mes_extenso, numero, pct, reais
+from ingest.pontes import (
+    AREAS,
+    PonteReceita,
+    camada_unica,
+    ponte_clientes,
+    ponte_lojistas,
+    ponte_lojistas_mes,
+    ponte_receita,
+    respostas,
+    total,
 )
-select
-    o.order_id,
-    o.order_status,
-    strftime(o.purchased_at, '%Y-%m') as mes_compra,
-    strftime(o.approved_at, '%Y-%m') as mes_aprovacao,
-    o.approved_at is not null as aprovado,
-    i.vi,
-    p.vp,
-    p.parcelas
-from staging.stg_olist__orders as o
-left join itens as i on o.order_id = i.order_id
-left join pag as p on o.order_id = p.order_id
-"""
 
 
-@dataclass(frozen=True)
-class PonteReceita:
-    mes: str | None
-    vendas: float
-    sem_aprovacao: float  # itens de pedidos sem data de aprovação (saem)
-    sem_pagamento: float  # itens de pedidos aprovados sem pagamento (saem)
-    pago_sem_item: float  # pagamento de pedidos sem item (entram)
-    pago_a_mais: float  # pagamento acima de itens + frete (entra)
-    pago_a_mais_pedidos: int
-    pago_a_mais_parcelados: int
-    pago_a_menos: float  # pagamento abaixo de itens + frete (sai)
-    pago_a_menos_pedidos: int
-    efeito_data: float  # aprovação cai em outro mês que a compra
-    financeiro: float
-    cancelados_vendas: float  # valor de cancelados/indisponíveis dentro de vendas
-    cancelados_financeiro: float
-
-    @property
-    def componentes(self) -> list[tuple[str, float]]:
-        return [
-            ("pedidos sem data de aprovação", -self.sem_aprovacao),
-            ("pedidos aprovados sem pagamento registrado", -self.sem_pagamento),
-            ("pagamentos de pedidos sem item", self.pago_sem_item),
-            ("pago acima de itens + frete (em geral juros)", self.pago_a_mais),
-            ("pago abaixo de itens + frete", self.pago_a_menos),
-            ("data de aprovação em outro mês", self.efeito_data),
-        ]
-
-    def fecha(self, tolerancia: float = 0.005) -> bool:
-        soma = self.vendas + sum(v for _, v in self.componentes)
-        return abs(soma - self.financeiro) <= tolerancia
+def _fracao(parte: float, todo: float) -> str:
+    return pct(parte / todo, casas=0) if todo else TRACO
 
 
-def ponte_receita(con: duckdb.DuckDBPyConnection, mes: str | None = None) -> PonteReceita:
-    filtro = "where mes_compra = $mes" if mes else ""
-    params = {"mes": mes} if mes else {}
-    linha = con.execute(
-        f"""
-        with base as ({_BASE_RECEITA})
-        select
-            coalesce(sum(vi), 0),
-            coalesce(sum(vi) filter (where not aprovado), 0),
-            coalesce(sum(vi) filter (where aprovado and vp is null), 0),
-            coalesce(sum(vp) filter (where aprovado and vi is null), 0),
-            coalesce(sum(vp - vi) filter (where aprovado and vp > vi), 0),
-            count(*) filter (where aprovado and vp > vi),
-            count(*) filter (where aprovado and vp > vi and parcelas > 1),
-            coalesce(sum(vp - vi) filter (where aprovado and vp < vi), 0),
-            count(*) filter (where aprovado and vp < vi),
-            coalesce(sum(vp) filter (where aprovado), 0),
-            coalesce(sum(vi) filter (where order_status in ('canceled', 'unavailable')), 0),
-            coalesce(sum(vp) filter (
-                where aprovado and order_status in ('canceled', 'unavailable')), 0)
-        from base {filtro}
-        """,
-        params,
-    ).fetchone()
-    (vendas, sem_aprov, sem_pag, sem_item, mais, n_mais, n_parc, menos, n_menos,
-     fin_pela_compra, canc_v, canc_f) = (float(x) for x in linha)  # fmt: skip
-
-    if mes:
-        (fin_pela_aprovacao,) = con.execute(
-            f"with base as ({_BASE_RECEITA}) "
-            "select coalesce(sum(vp), 0) from base where aprovado and mes_aprovacao = $mes",
-            params,
-        ).fetchone()
-        financeiro = float(fin_pela_aprovacao)
-    else:
-        financeiro = fin_pela_compra
-
-    return PonteReceita(
-        mes=mes,
-        vendas=vendas,
-        sem_aprovacao=sem_aprov,
-        sem_pagamento=sem_pag,
-        pago_sem_item=sem_item,
-        pago_a_mais=mais,
-        pago_a_mais_pedidos=int(n_mais),
-        pago_a_mais_parcelados=int(n_parc),
-        pago_a_menos=menos,
-        pago_a_menos_pedidos=int(n_menos),
-        efeito_data=financeiro - fin_pela_compra,
-        financeiro=financeiro,
-        cancelados_vendas=canc_v,
-        cancelados_financeiro=canc_f,
-    )
+def _tabela_ponte_receita(p: PonteReceita) -> str:
+    linhas = [
+        "| | R$ |",
+        "|---|---:|",
+        f"| **vendas** (itens + frete, data da compra) | **{reais(p.vendas)}** |",
+        *(f"| {nome} | {reais(v, sinal=True)} |" for nome, v in p.componentes if v),
+        f"| **financeiro** (pagamentos, data de aprovação) | **{reais(p.financeiro)}** |",
+    ]
+    return "\n".join(linhas)
 
 
-# --- Lojistas: marketing, vendas e operação ----------------------------------
-
-
-@dataclass(frozen=True)
-class PonteLojistas:
-    contratos: int
-    nunca_venderam: int
-    fechados_depois_da_base: int
-    venderam: int
-    mes_contato_diferente_do_fechamento: int
-    mediana_dias_contato_ate_fechamento: float
-
-
-def ponte_lojistas(con: duckdb.DuckDBPyConnection) -> PonteLojistas:
-    linha = con.execute(
-        """
-        with vendeu as (select distinct seller_id from staging.stg_olist__order_items),
-        fim_da_base as (select max(purchased_at) as fim from staging.stg_olist__orders)
-        select
-            count(*),
-            count(*) filter (where v.seller_id is null),
-            count(*) filter (where v.seller_id is null and d.won_at > f.fim),
-            count(*) filter (where v.seller_id is not null),
-            count(*) filter (
-                where date_trunc('month', m.first_contact_date) <> date_trunc('month', d.won_at)),
-            median(datediff('day', m.first_contact_date, d.won_at))
-        from staging.stg_olist__closed_deals as d
-        inner join staging.stg_olist__marketing_qualified_leads as m on d.mql_id = m.mql_id
-        left join vendeu as v on d.seller_id = v.seller_id
-        cross join fim_da_base as f
-        """
-    ).fetchone()
-    return PonteLojistas(*(int(x) for x in linha[:5]), float(linha[5]))
-
-
-@dataclass(frozen=True)
-class PonteLojistasMes:
-    """Pontes exatas num mês: marketing -> vendas -> operação."""
-
-    mes: str
-    marketing: int
-    contato_no_mes_fechou_em_outro: int  # sai de marketing
-    fechou_no_mes_contato_em_outro: int  # entra em vendas
-    vendas: int
-    fechou_no_mes_nunca_vendeu: int  # sai
-    fechou_no_mes_vendeu_em_outro_mes: int  # sai
-    fechou_antes_primeira_venda_no_mes: int  # entra em operação
-    operacao: int
-
-    def fecha(self) -> bool:
-        return (
-            self.marketing
-            - self.contato_no_mes_fechou_em_outro
-            + self.fechou_no_mes_contato_em_outro
-            == self.vendas
-        ) and (
-            self.vendas
-            - self.fechou_no_mes_nunca_vendeu
-            - self.fechou_no_mes_vendeu_em_outro_mes
-            + self.fechou_antes_primeira_venda_no_mes
-            == self.operacao
-        )
-
-
-def ponte_lojistas_mes(con: duckdb.DuckDBPyConnection, mes: str) -> PonteLojistasMes:
-    linha = con.execute(
-        """
-        with primeira_venda as (
-            select i.seller_id, min(o.purchased_at) as em
-            from staging.stg_olist__order_items as i
-            inner join staging.stg_olist__orders as o on i.order_id = o.order_id
-            group by 1
-        ),
-        d as (
-            select
-                strftime(m.first_contact_date, '%Y-%m') as mes_contato,
-                strftime(d.won_at, '%Y-%m') as mes_fechamento,
-                strftime(v.em, '%Y-%m') as mes_primeira_venda
-            from staging.stg_olist__closed_deals as d
-            inner join staging.stg_olist__marketing_qualified_leads as m on d.mql_id = m.mql_id
-            left join primeira_venda as v on d.seller_id = v.seller_id
-        )
-        select
-            count(*) filter (where mes_contato = $mes),
-            count(*) filter (where mes_contato = $mes and mes_fechamento <> $mes),
-            count(*) filter (where mes_fechamento = $mes and mes_contato <> $mes),
-            count(*) filter (where mes_fechamento = $mes),
-            count(*) filter (where mes_fechamento = $mes and mes_primeira_venda is null),
-            count(*) filter (where mes_fechamento = $mes and mes_primeira_venda <> $mes),
-            count(*) filter (where mes_primeira_venda = $mes and mes_fechamento <> $mes),
-            count(*) filter (where mes_primeira_venda = $mes)
-        from d
-        """,
-        {"mes": mes},
-    ).fetchone()
-    return PonteLojistasMes(mes, *(int(x) for x in linha))
-
-
-# --- Clientes: customer_id contra pessoa ------------------------------------
-
-
-@dataclass(frozen=True)
-class PonteClientes:
-    customer_ids: int
-    pessoas: int
-    pessoas_que_voltaram: int
-
-    @property
-    def contados_a_mais(self) -> int:
-        return self.customer_ids - self.pessoas
-
-
-def ponte_clientes(con: duckdb.DuckDBPyConnection) -> PonteClientes:
-    linha = con.execute(
-        """
-        select
-            count(distinct customer_id),
-            count(distinct customer_unique_id),
-            (select count(*) from (
-                select customer_unique_id from staging.stg_olist__customers
-                group by 1 having count(*) > 1))
-        from staging.stg_olist__customers
-        """
-    ).fetchone()
-    return PonteClientes(*(int(x) for x in linha))
-
-
-# --- Página ------------------------------------------------------------------
-
-MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
-
-
-def _mes_extenso(mes: str) -> str:
-    ano, m = mes.split("-")
-    return f"{MESES[int(m) - 1]}/{ano}"
-
-
-def _n(x: float | None) -> str:
-    return "—" if x is None else f"{x:,.0f}".replace(",", ".")
-
-
-def _r(x: float | None, sinal: bool = False) -> str:
-    if x is None:
-        return "—"
-    s = f"{abs(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    prefixo = ("+ " if x >= 0 else "− ") if sinal else ("−" if x < 0 else "")
-    return f"{prefixo}R$ {s}"
-
-
-def _pct(parte: float, todo: float) -> str:
-    return f"{100 * parte / todo:.0f}%".replace(".", ",") if todo else "—"
+def _tabela_camada_unica(v: dict[str, float], m: str) -> str:
+    linhas = [
+        f"| métrica | {m} | regra (ver contrato) |",
+        "|---|---:|---|",
+        f"| lojistas contratados | {numero(v['lojistas_contratados'])} | data do contrato |",
+        f"| lojistas ativados | {numero(v['lojistas_ativados'])} | "
+        "primeira venda válida, no mês dela |",
+        f"| clientes novos | {numero(v['clientes_novos'])} | "
+        "pessoa (`customer_unique_id`), primeira compra válida |",
+        f"| pedidos válidos | {numero(v['pedidos_validos'])} | "
+        "sem cancelados, indisponíveis ou pedidos sem item |",
+        f"| receita bruta | {reais(v['receita_bruta'])} | itens + frete, data da compra |",
+        f"| receita paga | {reais(v['receita_paga'])} | "
+        "pagamentos, data de aprovação (reserva: compra) |",
+        f"| ticket médio | {reais(v['ticket_medio'])} | receita bruta ÷ pedidos válidos |",
+    ]
+    return "\n".join(linhas)
 
 
 def para_markdown(con: duckdb.DuckDBPyConnection, mes: str) -> str:
     r = respostas(con)
     loj = ponte_lojistas(con)
+    loj_mes = ponte_lojistas_mes(con, mes)
     cli = ponte_clientes(con)
     rec = ponte_receita(con)
-    rec_mes = ponte_receita(con, mes)
-    m = _mes_extenso(mes)
-
-    def linha(pergunta: str, fmt=_n) -> str:
-        vals = [fmt(total(r, a, pergunta, mes)) for a in AREAS]
-        return f"| {pergunta} | " + " | ".join(vals) + " |"
-
-    loj_mes = {a: total(r, a, "lojistas conquistados", mes) for a in AREAS}
-    pl = ponte_lojistas_mes(con, mes)
+    m = mes_extenso(mes)
     fora_do_mes = loj.mes_contato_diferente_do_fechamento
+
+    def linha_pauta(pergunta: str, fmt=numero) -> str:
+        valores = " | ".join(fmt(total(r, area, pergunta, mes)) for area in AREAS)
+        return f"| {pergunta} | {valores} |"
+
+    def resposta(area: str, pergunta: str) -> str:
+        return numero(total(r, area, pergunta, mes))
 
     partes = [
         "# A reunião",
@@ -328,71 +83,71 @@ def para_markdown(con: duckdb.DuckDBPyConnection, mes: str) -> str:
         "",
         "| pergunta | marketing | vendas | financeiro | operação |",
         "|---|---:|---:|---:|---:|",
-        linha("lojistas conquistados"),
-        linha("clientes novos"),
-        linha("receita", _r),
+        linha_pauta("lojistas conquistados"),
+        linha_pauta("clientes novos"),
+        linha_pauta("receita", reais),
         "",
         "Um traço quer dizer que a área não responde essa pergunta.",
         "",
         "## Lojistas conquistados",
         "",
-        f"Em {m}, marketing diz {_n(loj_mes['marketing'])}, vendas diz "
-        f"{_n(loj_mes['vendas'])} e operação diz {_n(loj_mes['operacao'])}. No acumulado "
-        f"da base, marketing e vendas empatam em {_n(loj.contratos)} e operação fica em "
-        f"{_n(loj.venderam)}.",
+        f"Em {m}, marketing diz {resposta('marketing', 'lojistas conquistados')}, vendas diz "
+        f"{resposta('vendas', 'lojistas conquistados')} e operação diz "
+        f"{resposta('operacao', 'lojistas conquistados')}. No acumulado da base, marketing e "
+        f"vendas empatam em {numero(loj.contratos)} e operação fica em {numero(loj.venderam)}.",
         "",
         f"### Em {m}",
         "",
         "| | lojistas |",
         "|---|---:|",
-        f"| **marketing** (mês do primeiro contato) | **{_n(pl.marketing)}** |",
+        f"| **marketing** (mês do primeiro contato) | **{numero(loj_mes.marketing)}** |",
         f"| contato em {m}, contrato fechado em outro mês | "
-        f"− {_n(pl.contato_no_mes_fechou_em_outro)} |",
+        f"− {numero(loj_mes.contato_no_mes_fechou_em_outro)} |",
         f"| contrato fechado em {m}, contato em outro mês | "
-        f"+ {_n(pl.fechou_no_mes_contato_em_outro)} |",
-        f"| **vendas** (mês do fechamento) | **{_n(pl.vendas)}** |",
-        f"| fechou em {m} e nunca vendeu | − {_n(pl.fechou_no_mes_nunca_vendeu)} |",
+        f"+ {numero(loj_mes.fechou_no_mes_contato_em_outro)} |",
+        f"| **vendas** (mês do fechamento) | **{numero(loj_mes.vendas)}** |",
+        f"| fechou em {m} e nunca vendeu | − {numero(loj_mes.fechou_no_mes_nunca_vendeu)} |",
         f"| fechou em {m} e só vendeu num mês seguinte | "
-        f"− {_n(pl.fechou_no_mes_vendeu_em_outro_mes)} |",
+        f"− {numero(loj_mes.fechou_no_mes_vendeu_em_outro_mes)} |",
         f"| fechou antes e fez a primeira venda em {m} | "
-        f"+ {_n(pl.fechou_antes_primeira_venda_no_mes)} |",
-        f"| **operação** (mês da primeira venda) | **{_n(pl.operacao)}** |",
+        f"+ {numero(loj_mes.fechou_antes_primeira_venda_no_mes)} |",
+        f"| **operação** (mês da primeira venda) | **{numero(loj_mes.operacao)}** |",
         "",
         "### Na base inteira",
         "",
         "| causa | lojistas | quem é afetado |",
         "|---|---:|---|",
-        f"| primeiro contato e fechamento em meses diferentes | {_n(fora_do_mes)} "
-        f"de {_n(loj.contratos)} ({_pct(fora_do_mes, loj.contratos)}) "
+        f"| primeiro contato e fechamento em meses diferentes | {numero(fora_do_mes)} "
+        f"de {numero(loj.contratos)} ({_fracao(fora_do_mes, loj.contratos)}) "
         "| marketing contra vendas, mês a mês |",
-        f"| contrato assinado, lojista nunca vendeu | {_n(loj.nunca_venderam)} "
-        f"({_pct(loj.nunca_venderam, loj.contratos)}) | vendas contra operação |",
+        f"| contrato assinado, lojista nunca vendeu | {numero(loj.nunca_venderam)} "
+        f"({_fracao(loj.nunca_venderam, loj.contratos)}) | vendas contra operação |",
         f"| ... dos quais fecharam depois do último pedido da base | "
-        f"{_n(loj.fechados_depois_da_base)} | operação não tinha como contar |",
+        f"{numero(loj.fechados_depois_da_base)} | operação não tinha como contar |",
         "",
-        f"Marketing e vendas contam os mesmos {_n(loj.contratos)} contratos, só que em meses "
-        "diferentes: o marketing credita no mês em que o lead chegou e vendas no mês da "
-        f"assinatura. A mediana entre um e outro é de "
-        f"{_n(loj.mediana_dias_contato_ate_fechamento)} dias, o bastante para jogar metade "
+        f"Marketing e vendas contam os mesmos {numero(loj.contratos)} contratos, só que em "
+        "meses diferentes: o marketing credita no mês em que o lead chegou e vendas no mês da "
+        "assinatura. A mediana entre um e outro é de "
+        f"{numero(loj.mediana_dias_contato_ate_fechamento)} dias, o bastante para jogar metade "
         "dos contratos para o mês seguinte.",
         "",
         "Operação só conta quem vendeu, e conta no mês da primeira venda. A diferença para "
-        f"vendas no acumulado é inteira de lojistas que assinaram e nunca venderam: "
-        f"{_n(loj.nunca_venderam)} de {_n(loj.contratos)}.",
+        "vendas no acumulado é inteira de lojistas que assinaram e nunca venderam: "
+        f"{numero(loj.nunca_venderam)} de {numero(loj.contratos)}.",
         "",
         "## Clientes novos",
         "",
-        f"Marketing conta {_n(cli.customer_ids)} clientes e operação conta {_n(cli.pessoas)}. "
-        f"A diferença, {_n(cli.contados_a_mais)}, é toda de clientes que voltaram a comprar: "
-        f"a Olist cria um `customer_id` novo a cada pedido, e o marketing conta essa coluna. "
-        f"São {_n(cli.pessoas_que_voltaram)} pessoas com mais de um pedido. Em {m} a "
-        f"diferença é {_n(total(r, 'marketing', 'clientes novos', mes))} contra "
-        f"{_n(total(r, 'operacao', 'clientes novos', mes))}, pelo mesmo motivo.",
+        f"Marketing conta {numero(cli.customer_ids)} clientes e operação conta "
+        f"{numero(cli.pessoas)}. A diferença, {numero(cli.contados_a_mais)}, é toda de clientes "
+        "que voltaram a comprar: a Olist cria um `customer_id` novo a cada pedido, e o "
+        f"marketing conta essa coluna. São {numero(cli.pessoas_que_voltaram)} pessoas com mais "
+        f"de um pedido. Em {m} a diferença é {resposta('marketing', 'clientes novos')} contra "
+        f"{resposta('operacao', 'clientes novos')}, pelo mesmo motivo.",
         "",
         "| causa | clientes |",
         "|---|---:|",
-        f"| pedidos de quem já tinha comprado antes, contados como cliente novo "
-        f"| {_n(cli.contados_a_mais)} |",
+        "| pedidos de quem já tinha comprado antes, contados como cliente novo "
+        f"| {numero(cli.contados_a_mais)} |",
         "",
         "## Receita",
         "",
@@ -402,21 +157,21 @@ def para_markdown(con: duckdb.DuckDBPyConnection, mes: str) -> str:
         "",
         "### Na base inteira",
         "",
-        _tabela_ponte(rec),
+        _tabela_ponte_receita(rec),
         "",
-        f"A maior parcela não é juros. São {_r(rec.pago_sem_item)} pagos em pedidos que "
+        f"A maior parcela não é juros. São {reais(rec.pago_sem_item)} pagos em pedidos que "
         "não têm nenhum item, quase todos cancelados ou indisponíveis: o financeiro viu o "
         "dinheiro entrar, vendas nunca registrou o item. O que foi pago acima de itens "
-        f"+ frete soma {_r(rec.pago_a_mais)} em {_n(rec.pago_a_mais_pedidos)} pedidos, "
-        f"{_n(rec.pago_a_mais_parcelados)} deles parcelados: é o juro do parcelamento.",
+        f"+ frete soma {reais(rec.pago_a_mais)} em {numero(rec.pago_a_mais_pedidos)} pedidos, "
+        f"{numero(rec.pago_a_mais_parcelados)} deles parcelados: é o juro do parcelamento.",
         "",
-        f"Cancelados e indisponíveis pesam {_r(rec.cancelados_vendas)} na conta de vendas "
-        f"e {_r(rec.cancelados_financeiro)} na do financeiro. Nenhuma das duas consultas "
+        f"Cancelados e indisponíveis pesam {reais(rec.cancelados_vendas)} na conta de vendas "
+        f"e {reais(rec.cancelados_financeiro)} na do financeiro. Nenhuma das duas consultas "
         "olha o status do pedido.",
         "",
         f"### Em {m}",
         "",
-        _tabela_ponte(rec_mes),
+        _tabela_ponte_receita(ponte_receita(con, mes)),
         "",
         "Num mês isolado aparece a causa que some no acumulado: a data. Um pedido feito no "
         "dia 31 e aprovado no dia 1º é receita de um mês para vendas e do outro para o "
@@ -439,63 +194,7 @@ def para_markdown(con: duckdb.DuckDBPyConnection, mes: str) -> str:
     return "\n".join(partes)
 
 
-def camada_unica(con: duckdb.DuckDBPyConnection, mes: str) -> dict[str, float]:
-    """O número oficial de cada métrica do contrato num mês, lido só dos marts."""
-    sql = """
-    select
-        (select count(*) from marts.fct_jornada_lojista
-         where strftime(contratado_em, '%Y-%m') = $mes),
-        (select count(*) from marts.fct_jornada_lojista
-         where foi_ativado and strftime(primeira_venda_em, '%Y-%m') = $mes),
-        (select count(*) from marts.dim_clientes
-         where strftime(primeira_compra_em, '%Y-%m') = $mes),
-        (select count(*) from marts.fct_pedidos
-         where eh_valido and strftime(comprado_em, '%Y-%m') = $mes),
-        (select coalesce(sum(receita_bruta), 0) from marts.fct_pedidos
-         where strftime(comprado_em, '%Y-%m') = $mes),
-        (select coalesce(sum(receita_paga), 0) from marts.fct_pedidos
-         where strftime(receita_paga_em, '%Y-%m') = $mes)
-    """
-    nomes = ["lojistas_contratados", "lojistas_ativados", "clientes_novos",
-             "pedidos_validos", "receita_bruta", "receita_paga"]  # fmt: skip
-    valores = dict(zip(nomes, (float(x) for x in con.execute(sql, {"mes": mes}).fetchone()),
-                       strict=True))  # fmt: skip
-    p = valores["pedidos_validos"]
-    valores["ticket_medio"] = valores["receita_bruta"] / p if p else 0.0
-    return valores
-
-
-def _tabela_camada_unica(v: dict[str, float], m: str) -> str:
-    linhas = [
-        f"| métrica | {m} | regra (ver contrato) |",
-        "|---|---:|---|",
-        f"| lojistas contratados | {_n(v['lojistas_contratados'])} | data do contrato |",
-        f"| lojistas ativados | {_n(v['lojistas_ativados'])} | "
-        "primeira venda válida, no mês dela |",
-        f"| clientes novos | {_n(v['clientes_novos'])} | "
-        "pessoa (`customer_unique_id`), primeira compra válida |",
-        f"| pedidos válidos | {_n(v['pedidos_validos'])} | "
-        "sem cancelados, indisponíveis ou pedidos sem item |",
-        f"| receita bruta | {_r(v['receita_bruta'])} | itens + frete, data da compra |",
-        f"| receita paga | {_r(v['receita_paga'])} | "
-        "pagamentos, data de aprovação (reserva: compra) |",
-        f"| ticket médio | {_r(v['ticket_medio'])} | receita bruta ÷ pedidos válidos |",
-    ]
-    return "\n".join(linhas)
-
-
-def _tabela_ponte(p: PonteReceita) -> str:
-    linhas = [
-        "| | R$ |",
-        "|---|---:|",
-        f"| **vendas** (itens + frete, data da compra) | **{_r(p.vendas)}** |",
-    ]
-    linhas += [f"| {nome} | {_r(v, sinal=True)} |" for nome, v in p.componentes if v]
-    linhas.append(f"| **financeiro** (pagamentos, data de aprovação) | **{_r(p.financeiro)}** |")
-    return "\n".join(linhas)
-
-
-def gerar(db_path: Path, saida: Path, mes: str = "2018-03") -> Path:
+def gerar(db_path: Path, saida: Path, mes: str) -> Path:
     with duckdb.connect(str(db_path), read_only=True) as con:
         texto = para_markdown(con, mes)
     saida.parent.mkdir(parents=True, exist_ok=True)

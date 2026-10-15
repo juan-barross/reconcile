@@ -9,16 +9,13 @@ from rich.console import Console
 from rich.table import Table
 
 from ingest.fontes import Caminhos, caminhos
+from ingest.formato import numero
 
 app = typer.Typer(help="Por que as áreas da Olist têm números diferentes.", no_args_is_help=True)
 console = Console()
 
 MES_PADRAO = "2018-03"
 OPCAO_MES = typer.Option(MES_PADRAO, help="Mês no formato AAAA-MM.")
-
-
-def _milhar(valor: float, casas: int = 0) -> str:
-    return f"{valor:,.{casas}f}".translate(str.maketrans(",.", ".,"))
 
 
 @app.callback()
@@ -52,7 +49,7 @@ def carregar(ctx: typer.Context) -> None:
     c: Caminhos = ctx.obj
     tabela = Table("tabela raw", "linhas", title=f"Carga em {c.db_path}")
     for carga in _carregar(c.csv_dir, c.db_path):
-        tabela.add_row(carga.tabela, _milhar(carga.linhas))
+        tabela.add_row(carga.tabela, numero(carga.linhas))
     console.print(tabela)
 
 
@@ -92,7 +89,7 @@ def metricas(ctx: typer.Context, mes: str = OPCAO_MES) -> None:
     tabela = Table("métrica", mes, title="mf query")
     for metrica, valor in por_mes(ctx.obj.db_path, mes).items():
         casas = 2 if metrica.startswith(("receita", "ticket")) else 0
-        tabela.add_row(metrica, _milhar(valor, casas))
+        tabela.add_row(metrica, numero(valor, casas))
     console.print(tabela)
 
 

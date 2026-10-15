@@ -15,6 +15,7 @@ from pathlib import Path
 import duckdb
 
 from ingest import projeto_dbt
+from ingest.formato import numero
 
 INT_PEDIDOS = "models/intermediate/int_pedidos__valores.sql"
 
@@ -125,7 +126,7 @@ def rodar(cenario: Cenario, db_origem: Path) -> list[Falha]:
 def _linhas(n: int) -> str:
     if not n:
         return ""
-    return f" ({n:,} {'linha' if n == 1 else 'linhas'})".replace(",", ".")
+    return f" ({numero(n)} {'linha' if n == 1 else 'linhas'})"
 
 
 def para_markdown(resultados: list[tuple[Cenario, list[Falha]]], base: str) -> str:

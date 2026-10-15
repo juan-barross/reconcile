@@ -1,7 +1,7 @@
 import duckdb
 import pytest
 
-from ingest import reuniao
+from ingest import pontes, reuniao
 
 
 @pytest.fixture
@@ -17,13 +17,13 @@ def _meses(con):
 
 
 def test_ponte_de_receita_fecha_na_base_e_em_cada_mes(con):
-    assert reuniao.ponte_receita(con).fecha()
+    assert pontes.ponte_receita(con).fecha()
     for mes in _meses(con):
-        assert reuniao.ponte_receita(con, mes).fecha(), mes
+        assert pontes.ponte_receita(con, mes).fecha(), mes
 
 
 def test_ponte_de_receita_acha_as_causas_plantadas(con):
-    p = reuniao.ponte_receita(con)
+    p = pontes.ponte_receita(con)
     assert p.pago_a_mais_pedidos == 3  # o05, o10, o15 com juros de 2%
     assert p.pago_a_mais_parcelados == 3
     assert p.pago_sem_item == pytest.approx(160.0)  # o29 e o30, R$ 80 cada
@@ -32,33 +32,33 @@ def test_ponte_de_receita_acha_as_causas_plantadas(con):
 
 
 def test_ponte_de_receita_bate_com_as_consultas_das_areas(con):
-    r = reuniao.respostas(con)
-    p = reuniao.ponte_receita(con)
-    assert reuniao.total(r, "vendas", "receita") == pytest.approx(p.vendas)
-    assert reuniao.total(r, "financeiro", "receita") == pytest.approx(p.financeiro)
+    r = pontes.respostas(con)
+    p = pontes.ponte_receita(con)
+    assert pontes.total(r, "vendas", "receita") == pytest.approx(p.vendas)
+    assert pontes.total(r, "financeiro", "receita") == pytest.approx(p.financeiro)
 
 
 def test_ponte_de_lojistas(con):
-    p = reuniao.ponte_lojistas(con)
+    p = pontes.ponte_lojistas(con)
     assert (p.contratos, p.nunca_venderam, p.venderam) == (4, 2, 2)
 
 
 def test_ponte_de_lojistas_fecha_em_cada_mes(con):
     for mes in ["2018-01", "2018-02", "2018-03", "2018-04"]:
-        assert reuniao.ponte_lojistas_mes(con, mes).fecha(), mes
+        assert pontes.ponte_lojistas_mes(con, mes).fecha(), mes
 
 
 def test_ponte_de_lojistas_mensal_bate_com_as_consultas(con):
-    r = reuniao.respostas(con)
+    r = pontes.respostas(con)
     for mes in ["2018-01", "2018-02", "2018-03"]:
-        p = reuniao.ponte_lojistas_mes(con, mes)
-        assert p.marketing == (reuniao.total(r, "marketing", "lojistas conquistados", mes) or 0)
-        assert p.vendas == (reuniao.total(r, "vendas", "lojistas conquistados", mes) or 0)
-        assert p.operacao == (reuniao.total(r, "operacao", "lojistas conquistados", mes) or 0)
+        p = pontes.ponte_lojistas_mes(con, mes)
+        assert p.marketing == (pontes.total(r, "marketing", "lojistas conquistados", mes) or 0)
+        assert p.vendas == (pontes.total(r, "vendas", "lojistas conquistados", mes) or 0)
+        assert p.operacao == (pontes.total(r, "operacao", "lojistas conquistados", mes) or 0)
 
 
 def test_ponte_de_clientes(con):
-    p = reuniao.ponte_clientes(con)
+    p = pontes.ponte_clientes(con)
     assert (p.customer_ids, p.pessoas, p.contados_a_mais) == (30, 26, 4)
 
 
