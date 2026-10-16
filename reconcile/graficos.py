@@ -2,7 +2,7 @@ from pathlib import Path
 
 from matplotlib.figure import Figure
 
-from reconcile.formato import pct
+from reconcile.base import pct
 from reconcile.valor_por_lead import JANELA, Estimativa, curva_km
 
 SUPERFICIE = "#fcfcfb"

@@ -1,7 +1,10 @@
+from collections import defaultdict
 from dataclasses import dataclass
 
 import duckdb
 import numpy as np
+
+from reconcile import base
 
 JANELA = 180
 B = 2000
@@ -22,7 +25,6 @@ class Estimativa:
     leads: int
     contratos: int
     contratos_observados: int
-    conversao_bruta: float
     conversao: float
     receita_media_bruta: float
     receita_media: float
@@ -35,23 +37,16 @@ class Estimativa:
 class Ativacao:
     canal: str
     contratos: int
-    nunca_venderam: int
     ativado_ate: dict[int, float]
 
 
 def carregar(con: duckdb.DuckDBPyConnection) -> list[Canal]:
-    leads = dict(con.execute("select canal, count(*) from marts.dim_leads group by 1").fetchall())
-    contratos = dict(
-        con.execute("select canal, count(*) from marts.fct_jornada_lojista group by 1").fetchall()
-    )
-    receitas: dict[str, list[float]] = {}
-    for canal, receita in con.execute(
-        "select canal, receita_bruta_180d from marts.fct_jornada_lojista where observado_180d"
-    ).fetchall():
-        receitas.setdefault(canal, []).append(float(receita))
+    receitas = defaultdict(list)
+    for canal, receita in base.linhas(con, "receitas_180d"):
+        receitas[canal].append(receita)
     return [
-        Canal(c, int(leads[c]), int(contratos.get(c, 0)), np.array(receitas.get(c, [])))
-        for c in sorted(leads)
+        Canal(canal, leads, contratos, np.array(receitas[canal]))
+        for canal, leads, contratos in base.linhas(con, "leads_por_canal")
     ]
 
 
@@ -86,12 +81,9 @@ def estimar(canais: list[Canal], b: int = B, semente: int = SEMENTE) -> list[Est
     n = np.array([c.leads for c in canais], dtype=float)
     x = np.array([c.contratos for c in canais], dtype=float)
     amostras = [c.receitas_180d for c in canais]
+    conversao, media = encolher_proporcoes(x, n), encolher_medias(amostras)
 
-    conversao = encolher_proporcoes(x, n)
-    media = encolher_medias(amostras)
-
-    conversoes = np.empty((b, len(canais)))
-    valores = np.empty((b, len(canais)))
+    conversoes, valores = np.empty((b, len(canais))), np.empty((b, len(canais)))
     for i in range(b):
         conversoes[i] = encolher_proporcoes(rng.binomial(n.astype(int), x / n).astype(float), n)
         reamostra = [rng.choice(a, size=len(a)) if len(a) else a for a in amostras]
@@ -105,13 +97,12 @@ def estimar(canais: list[Canal], b: int = B, semente: int = SEMENTE) -> list[Est
             leads=c.leads,
             contratos=c.contratos,
             contratos_observados=len(c.receitas_180d),
-            conversao_bruta=c.contratos / c.leads,
             conversao=float(conversao[i]),
             receita_media_bruta=float(c.receitas_180d.mean()) if len(c.receitas_180d) else 0.0,
             receita_media=float(media[i]),
             valor=float(conversao[i] * media[i]),
-            valor_ic=(float(valor_ic[0, i]), float(valor_ic[1, i])),
-            conversao_ic=(float(conversao_ic[0, i]), float(conversao_ic[1, i])),
+            valor_ic=tuple(map(float, valor_ic[:, i])),
+            conversao_ic=tuple(map(float, conversao_ic[:, i])),
         )
         for i, c in enumerate(canais)
     ]
@@ -120,8 +111,7 @@ def estimar(canais: list[Canal], b: int = B, semente: int = SEMENTE) -> list[Est
 def curva_km(tempos: np.ndarray, eventos: np.ndarray) -> list[tuple[float, float]]:
     dias, indice = np.unique(tempos, return_inverse=True)
     vendas = np.bincount(indice, weights=eventos.astype(float))
-    saidas = np.bincount(indice)
-    em_risco = len(tempos) - np.concatenate(([0], np.cumsum(saidas)[:-1]))
+    em_risco = len(tempos) - np.concatenate(([0], np.cumsum(np.bincount(indice))[:-1]))
     sobrevivencia = np.cumprod(1 - vendas / em_risco)
     return [(0.0, 1.0), *zip(dias.tolist(), sobrevivencia.tolist(), strict=True)]
 
@@ -133,40 +123,16 @@ def kaplan_meier(tempos: np.ndarray, eventos: np.ndarray, pontos: tuple[int, ...
 
 
 def tempos_de_ativacao(con: duckdb.DuckDBPyConnection) -> dict[str, tuple[np.ndarray, np.ndarray]]:
-
-    linhas = con.execute(
-        """
-        with j as (
-            select
-                canal,
-                coalesce(
-                    foi_ativado and dias_contrato_ate_primeira_venda <= dias_observados, false
-                ) as vendeu,
-                dias_contrato_ate_primeira_venda,
-                dias_observados
-            from marts.fct_jornada_lojista
-        )
-
-        select
-            canal,
-            vendeu,
-            case when vendeu then dias_contrato_ate_primeira_venda else dias_observados end
-        from j
-        """
-    ).fetchall()
-    grupos: dict[str, list[tuple[bool, int]]] = {}
-    for canal, vendeu, dias in linhas:
-        grupos.setdefault(canal, []).append((vendeu, dias))
-        grupos.setdefault("todos", []).append((vendeu, dias))
-    return {
-        canal: (np.array([d for _, d in obs], dtype=float), np.array([v for v, _ in obs]))
-        for canal, obs in grupos.items()
-    }
+    grupos = defaultdict(list)
+    for canal, vendeu, dias in base.linhas(con, "ativacao"):
+        for grupo in (canal, "todos"):
+            grupos[grupo].append((dias, vendeu))
+    return {g: tuple(map(np.array, zip(*obs, strict=True))) for g, obs in grupos.items()}
 
 
 def ativacao(con: duckdb.DuckDBPyConnection, pontos=(30, 90, JANELA)) -> list[Ativacao]:
     grupos = sorted(tempos_de_ativacao(con).items(), key=lambda kv: -len(kv[1][0]))
     return [
-        Ativacao(canal, len(dias), int((~vendeu).sum()), kaplan_meier(dias, vendeu, pontos))
+        Ativacao(canal, len(dias), kaplan_meier(dias.astype(float), vendeu.astype(bool), pontos))
         for canal, (dias, vendeu) in grupos
     ]

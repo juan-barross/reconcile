@@ -2,8 +2,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from reconcile.base import numero
 from reconcile.caminhos import Caminhos, caminhos
-from reconcile.formato import numero
 
 app = typer.Typer(help="Por que as áreas da Olist têm números diferentes.", no_args_is_help=True)
 console = Console()
@@ -98,8 +98,8 @@ def quebrar(ctx: typer.Context) -> None:
     base = "a amostra sintética" if c.amostra else "o dado real da Olist"
     saida, resultados = gerar(c.db_path, c.docs_dir / "o_dia_que_mexeram_na_origem.md", base)
     for cenario, falhas in resultados:
-        cor = "green" if (cenario.nome == "controle") == (not falhas) else "red"
-        console.print(f"[{cor}]{cenario.nome}: {len(falhas)} teste(s) falharam[/]")
+        cor = "green" if (cenario["nome"] == "controle") == (not falhas) else "red"
+        console.print(f"[{cor}]{cenario['nome']}: {len(falhas)} teste(s) falharam[/]")
     _feito("Relatório", saida)
 
 

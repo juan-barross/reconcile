@@ -53,11 +53,12 @@ def test_extrai_o_valor_e_julga_a_consistencia():
     assert avaliacao.consistente(100.4, 100) and not avaliacao.consistente(102, 100)
 
 
-def test_avaliacao_compara_as_versoes(db_amostra_staging, perguntas):
+def test_avaliacao_compara_as_versoes(db_amostra_staging, perguntas, tmp_path):
     entradas = {p["pergunta"]: {"metrica": p["metrica"], "mes": p["mes"]} for p in perguntas}
     resultados = avaliacao.avaliar(
         db_amostra_staging, perguntas, versoes=("B",), cliente=ClienteFalso(entradas.get)
     )
     assert len(perguntas) == 48
-    assert resultados[0].acertos() == (48, 48)
-    assert "48 de 48 (100%)" in avaliacao.para_markdown(resultados, "claude-opus-5-5")
+    assert avaliacao.acertos(resultados["B"]) == (48, 48)
+    relatorio = avaliacao.para_markdown(resultados, "claude-opus-5-5", tmp_path / "agente.md")
+    assert "48 de 48 (100%)" in relatorio.read_text(encoding="utf-8")

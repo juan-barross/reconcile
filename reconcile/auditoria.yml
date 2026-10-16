@@ -1,0 +1,121 @@
+- categoria: chave
+  nome: pedidos com order_id repetido
+  sql: select count(*) - count(distinct (order_id)) from raw.orders
+  leitura: Chave limpa.
+- categoria: chave
+  nome: itens com (pedido, número do item) repetido
+  sql: select count(*) - count(distinct (order_id, order_item_id)) from raw.order_items
+  leitura: Chave composta limpa.
+- categoria: chave
+  nome: pagamentos com (pedido, sequência) repetido
+  sql: select count(*) - count(distinct (order_id, payment_sequential)) from raw.order_payments
+  leitura: Chave composta limpa.
+- categoria: chave
+  nome: linhas de avaliação que repetem um review_id
+  sql: select count(*) - count(distinct (review_id)) from raw.order_reviews
+  leitura: A mesma avaliação aparece em mais de um pedido. A chave é (review_id, order_id).
+- categoria: chave
+  nome: leads com mql_id repetido
+  sql: select count(*) - count(distinct (mql_id)) from raw.marketing_qualified_leads
+  leitura: Cada lead tem uma linha, logo uma origem só.
+- categoria: chave
+  nome: contratos com mql_id repetido
+  sql: select count(*) - count(distinct (mql_id)) from raw.closed_deals
+  leitura: Cada lead fecha no máximo um contrato.
+- categoria: cliente
+  nome: customer_id a mais que pessoas (customer_unique_id)
+  sql: select count(distinct customer_id) - count(distinct customer_unique_id) from raw.customers
+  leitura: Cada pedido gera um customer_id novo. Contar por customer_id infla clientes.
+- categoria: cliente
+  nome: pessoas com mais de um customer_id
+  sql: select count(*) from (select customer_unique_id from raw.customers group by 1 having count(*) >
+    1)
+  leitura: Clientes que voltaram a comprar. Contados uma vez por pedido se a chave for errada.
+- categoria: órfão
+  nome: itens sem pedido
+  sql: select count(*) from raw.order_items f where not exists (select 1 from raw.orders p where p.order_id
+    = f.order_id)
+  leitura: Integridade ok.
+- categoria: órfão
+  nome: pagamentos sem pedido
+  sql: select count(*) from raw.order_payments f where not exists (select 1 from raw.orders p where p.order_id
+    = f.order_id)
+  leitura: Integridade ok.
+- categoria: órfão
+  nome: pedidos sem nenhum item
+  sql: select count(*) from raw.orders f where not exists (select 1 from raw.order_items p where p.order_id
+    = f.order_id)
+  leitura: Quase todos cancelados ou indisponíveis. Entram na contagem de pedidos de quem conta pela tabela
+    de pedidos e somem para quem conta por itens.
+- categoria: órfão
+  nome: pedidos sem pagamento
+  sql: select count(*) from raw.orders f where not exists (select 1 from raw.order_payments p where p.order_id
+    = f.order_id)
+  leitura: 'Pedido sem registro de pagamento: some da receita do financeiro.'
+- categoria: órfão
+  nome: contratos sem lead de origem
+  sql: select count(*) from raw.closed_deals f where not exists (select 1 from raw.marketing_qualified_leads
+    p where p.mql_id = f.mql_id)
+  leitura: Todo contrato veio de um lead do marketing.
+- categoria: órfão
+  nome: contratos cujo lojista nunca vendeu
+  sql: select count(*) from raw.closed_deals f where not exists (select 1 from raw.order_items p where
+    p.seller_id = f.seller_id)
+  leitura: Contrato assinado que não virou lojista ativo. Vendas conta, operação não.
+- categoria: data
+  nome: envio à transportadora antes da compra
+  sql: select count(*) from raw.orders where order_delivered_carrier_date < order_purchase_timestamp
+  leitura: Data impossível. Afeta quem conta vendas pela data de envio.
+- categoria: data
+  nome: entrega ao cliente antes do envio à transportadora
+  sql: select count(*) from raw.orders where order_delivered_customer_date < order_delivered_carrier_date
+  leitura: Data impossível. Afeta prazo de entrega, não receita.
+- categoria: data
+  nome: entregues ou enviados sem data de aprovação
+  sql: select count(*) from raw.orders where order_approved_at is null and order_status in ('delivered',
+    'shipped')
+  leitura: Somem de quem conta pela data de aprovação, apesar de terem sido entregues.
+- categoria: data
+  nome: status 'delivered' sem data de entrega
+  sql: select count(*) from raw.orders where order_status = 'delivered' and order_delivered_customer_date
+    is null
+  leitura: Somem de quem conta pela data de entrega.
+- categoria: data
+  nome: cancelados com data de entrega
+  sql: select count(*) from raw.orders where order_status = 'canceled' and order_delivered_customer_date
+    is not null
+  leitura: Status e datas se contradizem. Quem filtra por data de entrega conta como venda.
+- categoria: data
+  nome: contrato fechado antes do primeiro contato
+  sql: select count(*) from raw.closed_deals d join raw.marketing_qualified_leads m using (mql_id) where
+    cast(d.won_date as timestamp) < cast(m.first_contact_date as date)
+  leitura: Data impossível no funil.
+- categoria: data
+  nome: contratos fechados depois do último pedido da base
+  sql: select count(*) from raw.closed_deals where cast(won_date as timestamp) > (select max(cast(order_purchase_timestamp
+    as timestamp)) from raw.orders)
+  leitura: Não tiveram como vender dentro da base. Entram no denominador da ativação e puxam a taxa para
+    baixo se ninguém tratar.
+- categoria: funil
+  nome: leads sem origem (nula)
+  sql: select count(*) from raw.marketing_qualified_leads where origin is null
+  leitura: Somados a 'unknown' na análise por canal.
+- categoria: funil
+  nome: leads com origem 'unknown'
+  sql: select count(*) from raw.marketing_qualified_leads where origin = 'unknown'
+  leitura: Canal desconhecido. Não dá para atribuir receita a um canal.
+- categoria: pagamento
+  nome: pagamentos com valor zero
+  sql: select count(*) from raw.order_payments where cast(payment_value as decimal(12, 2)) = 0
+  leitura: Vouchers zerados e 'not_defined'. Não mudam a receita, mas contam como pagamento.
+- categoria: pagamento
+  nome: pedidos pagos a mais que itens + frete (> R$ 1)
+  sql: with pago as (select order_id, sum(cast(payment_value as decimal(12, 2))) as v from raw.order_payments
+    group by 1), itens as (select order_id, sum(cast(price as decimal(12, 2)) + cast(freight_value as
+    decimal(12, 2))) as v from raw.order_items group by 1) select count(*) from pago join itens using
+    (order_id) where pago.v - itens.v > 1
+  leitura: Em geral juros de parcelamento. É a diferença entre a receita do financeiro e a do comercial.
+- categoria: produto
+  nome: produtos sem categoria
+  sql: select count(*) from raw.products where product_category_name is null
+  leitura: Ficam como 'sem categoria' em qualquer corte por categoria.

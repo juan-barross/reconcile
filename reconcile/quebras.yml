@@ -1,0 +1,32 @@
+- nome: controle
+  o_que_mudou: Nada. Sem mudança, nenhum teste pode falhar.
+- nome: pagamento duplicado na origem
+  o_que_mudou: O sistema de pagamentos reenviou cerca de 5% dos pagamentos.
+  sql_raw:
+  - insert into raw.order_payments select * from raw.order_payments where hash(order_id) % 20 = 0
+- nome: cliente duplicado na origem
+  o_que_mudou: O cadastro exportou de novo cerca de 2% dos clientes.
+  sql_raw:
+  - insert into raw.customers select * from raw.customers where hash(customer_id) % 50 = 0
+- nome: cliente contado por customer_id
+  o_que_mudou: A chave de cliente foi trocada para customer_id no intermediate.
+  trocas:
+  - arquivo: models/intermediate/int_pedidos__valores.sql
+    antes: 'c.customer_unique_id,
+
+      '
+    depois: 'o.customer_id as customer_unique_id,
+
+      '
+- nome: cancelados de volta
+  o_que_mudou: O filtro de status saiu da regra de pedido válido.
+  trocas:
+  - arquivo: models/intermediate/int_pedidos__valores.sql
+    antes: "o.order_status not in ('canceled', 'unavailable')\n        and "
+    depois: ''
+- nome: regra de data trocada
+  o_que_mudou: A receita paga passou a ser datada pela compra, e não pela aprovação.
+  trocas:
+  - arquivo: models/intermediate/int_pedidos__valores.sql
+    antes: coalesce(o.approved_at, o.purchased_at) as receita_paga_em
+    depois: o.purchased_at as receita_paga_em
