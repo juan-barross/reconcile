@@ -95,7 +95,7 @@ CSVs da Olist -> raw (texto) -> staging (tipos) -> intermediate -> marts (contra
 - **intermediate** e **marts**: as regras do contrato de métricas. Todo mart tem contrato de modelo enforced.
 - **semantic**: as oito métricas no MetricFlow, cada uma com a sua regra de data; um teste confere que `mf query` bate com os marts mês a mês.
 - **`departamentos/`**: a consulta que cada área faria sozinha, sem retoque.
-- **`reconcile/`**: o pacote Python com o CLI, a carga, a auditoria, as pontes, o painel, as quebras, a análise e o agente.
+- **`reconcile/`**: o pacote Python. A lógica fica nos módulos; as consultas, em `reconcile/sql/`; o texto de cada relatório, em `reconcile/modelos/`; as checagens da auditoria e os cenários de quebra, em YAML.
 
 ## O que deu errado no caminho
 
