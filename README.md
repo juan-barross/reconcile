@@ -7,12 +7,12 @@
 
 ## Teste pelo GitHub, sem instalar nada
 
-1. **Veja o GitHub rodar.** Clique no selo *Resultado no dado real* acima e abra a execução mais recente. A cada push, o GitHub baixa a Olist, roda o dbt, quebra a origem de propósito e publica na própria página o veredito, a reunião e os testes que pegaram cada quebra. Os relatórios também ficam para baixar em *Artifacts*.
-2. **Rode você mesmo no navegador.** Clique no botão abaixo, espere o ambiente instalar e digite `uv run reconcile tudo` no terminal. No fim aparece a tabela do veredito.
+1. Clique no selo *Resultado no dado real* acima e abra a execução mais recente. A cada push, o GitHub baixa a Olist, roda o dbt, quebra a origem de propósito e publica na própria página o veredito, a reunião e os testes que pegaram cada quebra. Os relatórios também ficam para baixar em *Artifacts*.
+2. Para rodar no navegador, clique no botão abaixo, espere o ambiente instalar e digite `uv run reconcile tudo` no terminal. No fim aparece a tabela do veredito.
 
    [![Abrir no GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/juan-barross/Reconcile-?quickstart=1)
 
-3. **Só leia.** As páginas abaixo foram geradas pelo próprio código, com o dado real.
+3. Ou leia as páginas abaixo, geradas pelo código com o dado real.
 
 | página | o que mostra |
 |---|---|
@@ -32,13 +32,13 @@ Março de 2018, "quantos lojistas conquistamos?":
 |---:|---:|---:|---:|
 | 167 | 147 | 25 | 147 contratados, 25 ativados |
 
-Nenhuma área está errada: marketing conta pela data do primeiro contato, vendas pela data do contrato e operação pela primeira venda. A camada única dá nome a cada número e escreve a regra de data no contrato de métricas.
+Cada área usa uma data: marketing conta pelo primeiro contato, vendas pelo contrato e operação pela primeira venda. A camada única dá um nome a cada número e registra a regra de data no contrato de métricas.
 
 Com os números confiáveis, a pergunta de negócio:
 
-- **O canal decide quantos leads viram contrato, não quanto cada contrato vende.** Busca converte 12% dos leads, social 5,7% e e-mail 3,7%, com intervalos que não se cruzam; a receita por contrato em 180 dias é a mesma entre canais dentro do ruído.
-- **O maior vazamento é depois do contrato:** 47% dos lojistas contratados não vendem nada em 180 dias.
-- **23% dos contratos não têm canal registrado**, e é o grupo que mais converte.
+- Busca converte 12% dos leads, social 5,7% e e-mail 3,7%, com intervalos que não se cruzam. A receita por contrato em 180 dias é a mesma entre canais, dentro do ruído.
+- 47% dos lojistas contratados não vendem nada em 180 dias.
+- 23% dos contratos não têm canal registrado, e esse grupo é o que mais converte.
 
 ## Rode você mesmo
 
@@ -109,13 +109,13 @@ CSVs da Olist -> raw (texto) -> staging (tipos) -> intermediate -> marts (contra
 
 ## O que deu errado no caminho
 
-- **Um teste que não testava.** A primeira versão de `clientes_contados_por_pessoa` comparava a dimensão de clientes com o fato de pedidos. Se alguém trocasse a chave no intermediate, os dois mudavam juntos e o teste continuava verde. Só apareceu quando a quebra de propósito passou calada; agora o teste compara com as pessoas do staging.
-- **A amostra sintética escondia a quebra.** Os clientes que compravam duas vezes só tinham pedidos cancelados, então trocar a chave não mudava nada. A amostra passou a ter recompra em pedido válido.
-- **A amostra também era irreal em outros pontos.** Os testes dos marts pegaram lojistas vendendo antes de assinar contrato (no dado real não há nenhum caso) e juros que pesavam mais de 1% da receita.
-- **Janela de 12 meses impossível.** Nenhum contrato tem 12 meses observados: o mais antigo é de dez/2017 e a base termina em ago/2018. A janela virou 180 dias.
-- **O dbt segurava o arquivo.** Rodar o dbt no mesmo processo Python deixava a conexão do DuckDB aberta; o dbt passou a rodar em subprocesso.
-- **A CI falhou duas vezes no GitHub e passava na minha máquina:** uma regra de estilo SQL que eu não tinha rodado, e o `reconcile quebrar` copiando o projeto dbt antes de instalar os pacotes. Reproduzi a segunda escondendo `dbt_packages`.
-- **O painel no Metabase ninguém veria.** Com 4 GB de RAM e um contêiner para subir, virou um painel estático que abre no GitHub ([ADR 0004](docs/adr/0004-painel-estatico-no-lugar-do-metabase.md)).
+- A primeira versão de `clientes_contados_por_pessoa` comparava a dimensão de clientes com o fato de pedidos. Se alguém trocasse a chave no intermediate, os dois mudavam juntos e o teste continuava verde. Só apareceu quando a quebra de propósito passou calada; agora o teste compara com as pessoas do staging.
+- A amostra sintética escondia essa quebra: os clientes que compravam duas vezes só tinham pedidos cancelados, então trocar a chave não mudava nada. A amostra passou a ter recompra em pedido válido.
+- Os testes dos marts pegaram outros pontos irreais na amostra: lojistas vendendo antes de assinar contrato (no dado real não há nenhum caso) e juros que pesavam mais de 1% da receita.
+- A janela de 12 meses era impossível. Nenhum contrato tem 12 meses observados: o mais antigo é de dez/2017 e a base termina em ago/2018. A janela virou 180 dias.
+- Rodar o dbt no mesmo processo Python deixava a conexão do DuckDB aberta; o dbt passou a rodar em subprocesso.
+- A CI falhou duas vezes no GitHub e passava na minha máquina: uma regra de estilo SQL que eu não tinha rodado, e o `reconcile quebrar` copiando o projeto dbt antes de instalar os pacotes. Reproduzi a segunda escondendo `dbt_packages`.
+- O painel no Metabase ninguém veria. Com 4 GB de RAM e um contêiner para subir, virou um painel estático que abre no GitHub ([ADR 0004](docs/adr/0004-painel-estatico-no-lugar-do-metabase.md)).
 
 ## Decisões
 
