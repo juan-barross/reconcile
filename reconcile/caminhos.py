@@ -21,7 +21,6 @@ class Caminhos:
 
     @property
     def docs_dir(self) -> Path:
-
         return self.base if self.amostra else RAIZ / "docs"
 
 

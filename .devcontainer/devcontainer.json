@@ -1,6 +1,7 @@
 {
   "name": "Reconcile",
   "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "containerEnv": { "UV_LINK_MODE": "copy" },
   "postCreateCommand": "pip install --user uv && uv sync",
   "postAttachCommand": "echo 'Rode: uv run reconcile tudo  (dado real)  ou  uv run reconcile --amostra tudo'",
   "customizations": {

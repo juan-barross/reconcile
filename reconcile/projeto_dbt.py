@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import sys
@@ -17,6 +18,7 @@ def _ambiente(db_path: Path) -> dict[str, str]:
         **os.environ,
         "RECONCILE_DB_PATH": str(Path(db_path).resolve()),
         "DBT_PROFILES_DIR": str(DBT_DIR),
+        "PYTHONUTF8": "1",
     }
 
 
@@ -26,7 +28,7 @@ def _projeto(caminho: Path) -> list[str]:
 
 def instalar_pacotes() -> None:
     if not (DBT_DIR / "dbt_packages").exists():
-        subprocess.run([*_DBT, "deps", *_projeto(DBT_DIR)], check=True)
+        subprocess.run([*_DBT, "deps", "--quiet", *_projeto(DBT_DIR)], check=True)
 
 
 def dbt(
@@ -40,6 +42,10 @@ def dbt(
         stdin=subprocess.DEVNULL,
         timeout=TEMPO_MAXIMO,
     )
+
+
+def resultados(alvo: Path = DBT_DIR / "target") -> list[dict]:
+    return json.loads((alvo / "run_results.json").read_text(encoding="utf-8"))["results"]
 
 
 def mf(db_path: Path, *args: str) -> subprocess.CompletedProcess:

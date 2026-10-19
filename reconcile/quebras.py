@@ -1,4 +1,3 @@
-import json
 import shutil
 import tempfile
 from datetime import date
@@ -35,7 +34,7 @@ def rodar(cenario: dict, db_origem: Path) -> list[tuple[str, int]]:
         _preparar(cenario, db, projeto)
         args = ["build", "--target-path", str(alvo), "--quiet"]
         projeto_dbt.dbt(db, *args, projeto=projeto, silencioso=True)
-        resultados = json.loads((alvo / "run_results.json").read_text(encoding="utf-8"))["results"]
+        resultados = projeto_dbt.resultados(alvo)
     falhas = [r for r in resultados if r["status"] in ("fail", "error")]
     return sorted((r["unique_id"].split(".")[2], int(r.get("failures") or 0)) for r in falhas)
 

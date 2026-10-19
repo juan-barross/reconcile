@@ -57,8 +57,12 @@ def auditar(ctx: typer.Context) -> None:
 def dbt(ctx: typer.Context) -> None:
     from reconcile import projeto_dbt
 
-    if projeto_dbt.dbt(ctx.obj.db_path, "build").returncode != 0:
-        console.print("[red]dbt build falhou[/]")
+    ok = projeto_dbt.dbt(ctx.obj.db_path, "build", "--quiet").returncode == 0
+    resultados = projeto_dbt.resultados()
+    passaram = sum(r["status"] in ("success", "pass") for r in resultados)
+    cor = "green" if ok else "red"
+    console.print(f"[{cor}]dbt build: {passaram} de {len(resultados)} passaram[/]")
+    if not ok:
         raise typer.Exit(1)
 
 
