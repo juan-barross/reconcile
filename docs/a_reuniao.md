@@ -2,7 +2,7 @@
 
 Gerado por `reconcile reuniao` a partir das consultas em [`departamentos/`](../departamentos/). Não edite os números à mão.
 
-Cada área da Olist respondeu às mesmas três perguntas com a consulta que faria sozinha. Nenhuma está errada no sentido técnico: todas rodam e todas contam alguma coisa real. Elas discordam porque cada uma escolheu uma chave, uma data e um filtro diferentes, sem escrever a escolha em lugar nenhum.
+Cada área da Olist respondeu às mesmas três perguntas com a consulta que faria sozinha. As consultas rodam e contam coisas reais. Discordam porque cada área escolheu uma chave, uma data e um filtro sem registrar a escolha.
 
 ## A pauta: mar/2018
 
@@ -67,7 +67,7 @@ Vendas soma preço dos itens mais frete, pela data da compra. Financeiro soma o 
 | pago abaixo de itens + frete | − R$ 200,78 |
 | **financeiro** (pagamentos, data de aprovação) | **R$ 15.971.742,35** |
 
-A maior parcela não é juros. São R$ 127.416,78 pagos em pedidos que não têm nenhum item, quase todos cancelados ou indisponíveis: o financeiro viu o dinheiro entrar, vendas nunca registrou o item. O que foi pago acima de itens + frete soma R$ 3.071,17 em 367 pedidos, 318 deles parcelados: é o juro do parcelamento.
+A maior parcela são R$ 127.416,78 pagos em pedidos sem nenhum item, quase todos cancelados ou indisponíveis: o financeiro viu o dinheiro entrar e vendas nunca registrou o item. Os juros do parcelamento somam R$ 3.071,17, pagos acima de itens + frete em 367 pedidos, 318 deles parcelados.
 
 Cancelados e indisponíveis pesam R$ 108.026,21 na conta de vendas e R$ 235.248,04 na do financeiro. Nenhuma das duas consultas olha o status do pedido.
 
@@ -86,7 +86,7 @@ Num mês isolado aparece a causa que some no acumulado: a data. Um pedido feito 
 
 ## A resposta da camada única
 
-Nenhuma das diferenças acima é erro de SQL. Todas são decisões que ninguém escreveu: qual coluna é o cliente, qual data vale, se cancelado entra. O [contrato de métricas](contrato_de_metricas.md) escreve essas decisões e os marts do dbt as aplicam. Em mar/2018, a camada única responde:
+As diferenças acima vêm de decisões que ninguém escreveu: qual coluna identifica o cliente, qual data vale e se pedido cancelado entra. O [contrato de métricas](contrato_de_metricas.md) escreve essas decisões e os marts do dbt as aplicam. Em mar/2018, a camada única responde:
 
 | métrica | mar/2018 | regra (ver contrato) |
 |---|---:|---|
@@ -98,4 +98,4 @@ Nenhuma das diferenças acima é erro de SQL. Todas são decisões que ninguém 
 | receita paga | R$ 1.164.078,78 | pagamentos, data de aprovação (reserva: compra) |
 | ticket médio | R$ 160,81 | receita bruta ÷ pedidos válidos |
 
-Cada área continua podendo olhar o seu recorte, mas agora com nome próprio: o marketing quer "contratos por mês do lead", que é outra pergunta, e não "lojistas conquistados" com outra data.
+Cada área mantém o seu recorte, agora com nome próprio. O que o marketing chamava de lojistas conquistados passa a se chamar "contratos por mês do lead".

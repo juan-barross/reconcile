@@ -2,17 +2,17 @@
 
 Gerado por `reconcile crescimento` a partir da camada única. Não edite os números à mão.
 
-## Em uma frase
+## Resumo
 
-O canal decide **quantos** leads viram contrato, não **quanto** cada contrato vende: a receita por contrato nos primeiros 180 dias é a mesma em todos os canais dentro do ruído, e um lead de busca vale cerca de 2 vezes um de rede social. Mas o maior vazamento do funil não está na aquisição: 47,0% dos lojistas contratados não fazem nenhuma venda em 180 dias.
+O canal muda a conversão de lead em contrato. A receita de cada contrato nos primeiros 180 dias fica igual entre canais dentro do ruído, então um lead de busca vale cerca de 2 vezes um de rede social. O maior vazamento vem depois da assinatura: 47,0% dos lojistas contratados não fazem nenhuma venda em 180 dias.
 
 ## Recomendações
 
-1. **Concentrar a verba em busca (paga e orgânica) e rever social e e-mail.** Busca converte 12,2% e 11,8% dos leads; social converte 5,7% e e-mail 3,7%, com intervalos que não se cruzam com os de busca. Como a receita por contrato não muda com o canal, a escolha do canal é uma escolha de conversão.
+1. Concentrar a verba em busca (paga e orgânica) e rever social e e-mail. Busca converte 12,2% e 11,8% dos leads; social converte 5,7% e e-mail 3,7%, com intervalos que não se cruzam com os de busca. Como a receita por contrato não muda com o canal, a escolha do canal é uma escolha de conversão.
 
-2. **Tratar ativação como meta, com o mesmo peso da aquisição.** Só 43,8% dos contratados vendem em 90 dias e 53,0% em 180: a curva desacelera depois de 90 dias, com só mais 9 pontos nos 90 dias seguintes. Um programa de onboarding nos primeiros 90 dias ataca o ponto em que o lojista ainda pode ser recuperado. Cada contrato que ativa vende, em média, cerca de R$ 2.914 nos primeiros 180 dias.
+2. Tratar ativação como meta, com o mesmo peso da aquisição. Só 43,8% dos contratados vendem em 90 dias e 53,0% em 180: a curva desacelera depois de 90 dias, com só mais 9 pontos nos 90 dias seguintes. Um programa de onboarding nos primeiros 90 dias ataca o ponto em que o lojista ainda pode ser recuperado. Cada contrato que ativa vende, em média, cerca de R$ 2.914 nos primeiros 180 dias.
 
-3. **Consertar o registro de origem antes de decidir verba.** 14,5% dos leads e 22,9% dos contratos não têm canal (`unknown`), e é justamente o grupo que mais converte (16,4%). Se forem leads de indicação ou de vendas internas mal registrados, o canal mais eficiente está invisível. Tornar o campo obrigatório no CRM custa pouco e destrava a recomendação 1.
+3. Consertar o registro de origem antes de decidir verba. 14,5% dos leads e 22,9% dos contratos não têm canal (`unknown`), e esse grupo é o que mais converte (16,4%). Se forem leads de indicação ou de vendas internas mal registrados, o canal mais eficiente está invisível. Tornar o campo obrigatório no CRM custa pouco e permite conferir a recomendação 1.
 
 ## Valor de um lead, por canal
 
@@ -33,9 +33,13 @@ Valor = P(lead vira contrato) × receita bruta média de um contrato nos 180 dia
 | other | 150 | 4 | 4,7% (2,6% a 7,0%) | R$ 72 (R$ 24 a R$ 144) | R$ 7 |
 | email | 493 | 15 | 3,7% (2,3% a 5,2%) | R$ 58 (R$ 21 a R$ 120) | R$ 6 |
 
-**Por que a receita por contrato é igual entre canais.** Antes do encolhimento as médias variam muito (o `unknown` tem R$ 3.261, mas um único lojista responde por 74,9% da receita do canal e a mediana é R$ 52). Ainda assim, a variação entre canais é menor que a esperada só pelo acaso com tão poucos contratos observados (de 1 a 69 por canal). O melhor palpite para qualquer canal é a média geral, R$ 1.544.
+### Receita por contrato entre canais
 
-**Sensibilidade à taxa da Olist.** A base não informa a comissão que a Olist cobra do lojista, então a receita da Olist é uma premissa. Como ela multiplica o valor de todos os canais pelo mesmo número, a ordem dos canais não muda com a taxa; muda só o valor absoluto:
+Antes do encolhimento as médias variam muito (o `unknown` tem R$ 3.261, mas um único lojista responde por 74,9% da receita do canal e a mediana é R$ 52). Ainda assim, a variação entre canais é menor que a esperada só pelo acaso com tão poucos contratos observados (de 1 a 69 por canal). O melhor palpite para qualquer canal é a média geral, R$ 1.544.
+
+### Sensibilidade à taxa da Olist
+
+A base não informa a comissão que a Olist cobra do lojista, então a receita da Olist é uma premissa. Como ela multiplica o valor de todos os canais pelo mesmo número, a ordem dos canais não muda com a taxa; muda só o valor absoluto:
 
 | canal | taxa 5% | taxa 10% | taxa 15% | taxa 20% |
 |---|---:|---:|---:|---:|
@@ -64,7 +68,7 @@ Canais com menos de 15 contratos ficam fora da tabela. As frações usam Kaplan-
 
 ## Premissas e limites
 
-- **Janela de 180 dias.** Nenhum contrato tem 12 meses observados (o mais antigo é de dez/2017 e a observação termina em 31/08/2018).
-- **Receita é a do lojista (GMV), não a da Olist.** A receita da Olist depende da taxa, que é premissa.
-- **Correlação, não efeito causal.** Um canal que converte mais pode atrair lojistas diferentes; o que a análise sustenta é de onde os contratos vieram, não o que aconteceria mudando a verba.
-- **Pouca amostra em canais pequenos.** 842 contratos em 10 canais; por isso o encolhimento e os intervalos.
+- A janela é de 180 dias porque nenhum contrato tem 12 meses observados (o mais antigo é de dez/2017 e a observação termina em 31/08/2018).
+- A receita é a do lojista (GMV). A da Olist depende da taxa de comissão, que é premissa.
+- A análise mede correlação. Um canal que converte mais pode atrair lojistas diferentes, então ela diz de onde os contratos vieram, mas não o que aconteceria se a verba mudasse.
+- São 842 contratos em 10 canais, pouco para os canais pequenos. Por isso o encolhimento e os intervalos.

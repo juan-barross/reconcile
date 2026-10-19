@@ -2,7 +2,7 @@
 
 Uma definição por métrica, com dono, regra de data e exclusões. A [reunião](a_reuniao.md) mostrou que as áreas discordam porque ninguém escreveu essas escolhas; este documento as escreve. Cada métrica abaixo tem uma coluna num mart e pelo menos um teste no dbt. O teste `tests/test_contrato.py` falha se alguma métrica daqui ficar sem os dois.
 
-**Como mudar uma definição:** abrir um PR que altere este documento e o modelo juntos, com aprovação do dono da métrica. Mudança só no SQL, sem passar por aqui, é exatamente o que este contrato existe para impedir.
+Para mudar uma definição, abra um PR que altere este documento e o modelo juntos, com aprovação do dono da métrica. Uma mudança só no SQL traria a divergência de volta.
 
 ## Resumo
 

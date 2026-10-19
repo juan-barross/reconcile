@@ -23,11 +23,11 @@ MetricFlow, com as definições em `dbt/models/semantic/` e consulta pelo CLI `m
 
 - Fica no mesmo projeto dbt: as métricas são versionadas, testadas e documentadas junto com os modelos que as alimentam.
 - Uma métrica declarada com `agg_time_dimension` carrega a regra de data. "Receita paga por mês" sempre usa a data de aprovação, sem ninguém precisar lembrar.
-- O agente da semana 6 pode ser restrito a chamar `mf query --metrics ... --group-by ...`. Ele escolhe métricas pelo nome em vez de escrever SQL.
+- O agente pode ser restrito a chamar `mf query --metrics ... --group-by ...`. Ele escolhe métricas pelo nome em vez de escrever SQL.
 - Views SQL resolvem o caso simples, mas não compõem: cada combinação de métrica, granularidade e filtro vira uma view nova.
 - Cube exigiria outro serviço e outra linguagem de definição, e o ganho para este escopo é pequeno.
 
 ## Consequências
 
 - `dbt-metricflow` fixa as versões de `dbt-core` que aceita. O `uv.lock` trava a combinação que funciona.
-- O Metabase não lê MetricFlow direto. O painel lê os marts, e um teste compara os totais do painel com `mf query` para garantir que os dois batem.
+- O painel lê os marts, e um teste compara os marts com `mf query` mês a mês.

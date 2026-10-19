@@ -1,6 +1,6 @@
 # Veredito de {mes}
 
-Cada área contou do seu jeito. Se a ponte fecha, cada diferença entre elas tem causa conhecida e tamanho exato.
+Cada área conta do seu jeito. Quando a ponte fecha, toda a diferença entre duas áreas tem causa conhecida e tamanho exato.
 
 {tabela}
 

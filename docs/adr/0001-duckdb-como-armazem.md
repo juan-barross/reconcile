@@ -17,13 +17,12 @@ DuckDB, num arquivo em `data/olist.duckdb`, com o adaptador `dbt-duckdb`.
 
 ## Por quê
 
-- **Reprodução com um comando.** `uv sync && uv run reconcile tudo` baixa, carrega, roda o dbt e imprime a reunião. Não precisa de Docker, porta livre nem senha.
-- **CI barata.** O GitHub Actions roda `dbt build` sem subir um serviço de banco.
-- **MetricFlow suporta DuckDB** de forma oficial (`dbt-metricflow[duckdb]`).
-- **O SQL continua portável.** Os modelos usam SQL padrão e as macros do dbt para datas. Mudar para Postgres significa trocar o perfil em `profiles.yml` e ajustar poucas funções.
+- `uv sync && uv run reconcile tudo` baixa, carrega, roda o dbt e gera os relatórios. Não precisa de Docker, porta livre nem senha.
+- O GitHub Actions roda `dbt build` sem subir um serviço de banco.
+- O MetricFlow suporta DuckDB oficialmente (`dbt-metricflow[duckdb]`).
+- Os modelos usam SQL padrão e as macros do dbt para datas. Mudar para Postgres significa trocar o perfil em `profiles.yml` e ajustar poucas funções.
 
 ## Consequências
 
-- O Metabase não fala DuckDB de fábrica. O `docker-compose.yml` monta uma imagem com o driver comunitário da MotherDuck e abre o arquivo **em modo leitura** (ver ADR 0003).
-- O DuckDB aceita um processo escrevendo por vez. Rodar `dbt build` com o Metabase aberto pode falhar por trava no arquivo; o README explica a ordem (construir antes, abrir o painel depois).
+- O DuckDB aceita um processo escrevendo por vez. Isso pesou contra o Metabase, que precisaria do arquivo aberto (ADR 0003 e 0004), e fez o dbt rodar em subprocesso.
 - Perde-se a demonstração de permissões por papel (`GRANT`), que no Postgres separaria quem lê `raw` de quem lê `marts`. A separação fica por esquema e é verificada nos testes.
