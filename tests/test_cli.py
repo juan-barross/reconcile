@@ -1,6 +1,6 @@
 from typer.testing import CliRunner
 
-from reconcile import caminhos, crescimento
+from reconcile import caminhos, crescimento, veredito
 from reconcile.cli import app
 
 rodar = CliRunner().invoke
@@ -18,6 +18,18 @@ def test_amostra_baixa_carrega_e_audita(tmp_path, monkeypatch):
         assert rodar(app, ["--amostra", comando]).exit_code == 0, comando
     assert (tmp_path / "amostra" / "olist.duckdb").exists()
     assert "Checagens" in (tmp_path / "amostra" / "auditoria.md").read_text(encoding="utf-8")
+
+
+def test_veredito_fecha_as_pontes_na_amostra(db_amostra_staging, tmp_path):
+    resultado = veredito.checagens(db_amostra_staging, "2018-01")
+    assert all(ok for *_, ok in resultado)
+    texto = veredito.escrever(resultado, tmp_path / "v.md", "2018-01").read_text(encoding="utf-8")
+    assert "jan/2018" in texto and "**não**" not in texto
+
+
+def test_veredito_acusa_ponte_que_nao_fecha(tmp_path):
+    texto = veredito.escrever([("receita", "1, 2", False)], tmp_path / "v.md", "2018-03")
+    assert "| receita | 1, 2 | **não** |" in texto.read_text(encoding="utf-8")
 
 
 def test_growth_review_na_amostra(db_amostra_staging, tmp_path):

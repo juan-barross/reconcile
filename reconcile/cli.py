@@ -132,10 +132,26 @@ def avaliar(
         _feito("Avaliação", avaliacao.gerar_relatorio(c.db_path, c.docs_dir / "agente.md"))
 
 
-@app.command(help="Baixa, carrega, audita, roda o dbt e gera reunião, painel e Growth Review.")
+@app.command(help="Confere se as pontes entre as áreas fecham e grava veredito.md.")
+def veredito(ctx: typer.Context, mes: str = OPCAO_MES) -> None:
+    from reconcile.veredito import checagens, escrever
+
+    c: Caminhos = ctx.obj
+    resultado = checagens(c.db_path, mes)
+    tabela = Table("checagem", "números", "fecha?", title=f"Veredito de {mes}")
+    for nome, valores, ok in resultado:
+        tabela.add_row(nome, valores, "[green]sim[/]" if ok else "[red]não[/]")
+    console.print(tabela)
+    _feito("Veredito", escrever(resultado, c.docs_dir / "veredito.md", mes))
+    if not all(ok for *_, ok in resultado):
+        raise typer.Exit(1)
+
+
+@app.command(help="Baixa, carrega, audita, roda o dbt, gera os relatórios e mostra o veredito.")
 def tudo(ctx: typer.Context) -> None:
     for passo in (baixar, carregar, auditar, dbt, painel, crescimento):
         console.rule(passo.__name__)
         passo(ctx)
-    console.rule("reuniao")
-    reuniao(ctx, mes=MES_PADRAO)
+    for passo in (reuniao, veredito):
+        console.rule(passo.__name__)
+        passo(ctx, mes=MES_PADRAO)
