@@ -1,13 +1,22 @@
 # Reconcile
 
 [![CI](https://github.com/juan-barross/Reconcile-/actions/workflows/ci.yml/badge.svg)](https://github.com/juan-barross/Reconcile-/actions/workflows/ci.yml)
+[![Resultado no dado real](https://github.com/juan-barross/Reconcile-/actions/workflows/resultado.yml/badge.svg)](https://github.com/juan-barross/Reconcile-/actions/workflows/resultado.yml)
 
 **Os números não batem.** Marketing, vendas, financeiro e operação da Olist respondem à mesma pergunta com números diferentes. Este projeto reproduz a divergência com os **dados reais** da Olist, mede cada causa, constrói uma camada única de métricas em dbt e MetricFlow e prova que os testes barram a divergência quando ela volta.
 
-## Veja o resultado sem instalar nada
+## Teste pelo GitHub, sem instalar nada
+
+1. **Veja o GitHub rodar.** Clique no selo *Resultado no dado real* acima e abra a execução mais recente. A cada push, o GitHub baixa a Olist, roda o dbt, quebra a origem de propósito e publica na própria página o veredito, a reunião e os testes que pegaram cada quebra. Os relatórios também ficam para baixar em *Artifacts*.
+2. **Rode você mesmo no navegador.** Clique no botão abaixo, espere o ambiente instalar e digite `uv run reconcile tudo` no terminal. No fim aparece a tabela do veredito.
+
+   [![Abrir no GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/juan-barross/Reconcile-?quickstart=1)
+
+3. **Só leia.** As páginas abaixo foram geradas pelo próprio código, com o dado real.
 
 | página | o que mostra |
 |---|---|
+| [Veredito](docs/veredito.md) | as três pontes entre as áreas, e se cada uma fecha |
 | [A reunião](docs/a_reuniao.md) | cada área responde à mesma pergunta; cada diferença tem causa e tamanho, e as pontes fecham no centavo |
 | [O painel](docs/painel.md) | as oito métricas oficiais mês a mês, ao lado do que cada área responderia sozinha |
 | [O dia em que alguém mexeu na origem](docs/o_dia_que_mexeram_na_origem.md) | cinco divergências reintroduzidas de propósito e o teste que pegou cada uma |
@@ -65,6 +74,7 @@ uv run pytest
 | `reconcile auditar` | checa chaves, órfãos e datas da origem |
 | `reconcile dbt` | `dbt build`: modelos, testes e contratos de modelo |
 | `reconcile reuniao --mes 2018-03` | a resposta de cada área e as pontes entre elas |
+| `reconcile veredito --mes 2018-03` | confere se as pontes fecham; sai com erro se alguma não fechar |
 | `reconcile painel` | as métricas do contrato mês a mês, com gráficos |
 | `reconcile metricas --mes 2018-03` | as mesmas métricas pela camada semântica (`mf query`) |
 | `reconcile quebrar` | reintroduz cada divergência numa cópia e mostra o teste que a pega |
