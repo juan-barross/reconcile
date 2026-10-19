@@ -9,7 +9,10 @@ import duckdb
 
 from reconcile.pontes import camada_unica
 
-MODELO = os.environ.get("RECONCILE_MODELO", "claude-opus-5-5")
+OPENROUTER = os.environ.get("OPENROUTER_API_KEY")
+MODELO = os.environ.get(
+    "RECONCILE_MODELO", "anthropic/claude-opus-5.5" if OPENROUTER else "claude-opus-5-5"
+)
 MAX_VOLTAS = 8
 MAX_LINHAS = 50
 
@@ -92,8 +95,14 @@ def executar(versao: str, entrada: dict, db_path: Path) -> str:
             return f"erro: {erro}"
 
 
+def _cliente() -> anthropic.Anthropic:
+    if OPENROUTER:
+        return anthropic.Anthropic(base_url="https://openrouter.ai/api", auth_token=OPENROUTER)
+    return anthropic.Anthropic()
+
+
 def perguntar(pergunta: str, versao: str, db_path: Path, cliente=None) -> Resposta:
-    cliente = cliente or anthropic.Anthropic()
+    cliente = cliente or _cliente()
     mensagens = [{"role": "user", "content": pergunta}]
     entrada = saida = 0
     for _ in range(MAX_VOLTAS):

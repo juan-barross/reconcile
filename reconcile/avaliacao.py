@@ -78,8 +78,9 @@ def _resumo(versao: str, respostas: list, modelo: str) -> list[str]:
     entrada = sum(r.tokens_entrada for _, r in respostas)
     saida = sum(r.tokens_saida for _, r in respostas)
     custo = base.TRACO
-    if modelo in PRECO_POR_MILHAO:
-        preco_entrada, preco_saida = PRECO_POR_MILHAO[modelo]
+    nome = modelo.removeprefix("anthropic/").replace(".", "-")
+    if nome in PRECO_POR_MILHAO:
+        preco_entrada, preco_saida = PRECO_POR_MILHAO[nome]
         custo = f"US$ {base.numero((entrada * preco_entrada + saida * preco_saida) / 1e6, 2)}"
     return [
         versao,

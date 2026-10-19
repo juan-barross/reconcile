@@ -63,6 +63,12 @@ def test_consistencia(valor, esperado, ok):
     assert avaliacao.consistente(valor, esperado) is ok
 
 
+@pytest.mark.parametrize("modelo", ["claude-opus-5-5", "anthropic/claude-opus-5.5"])
+def test_custo_reconhece_o_nome_do_modelo_nos_dois_provedores(modelo):
+    respostas = [({"metrica": "leads", "esperado": 1}, agente.Resposta("", 1, 1_000_000, 0))]
+    assert avaliacao._resumo("B", respostas, modelo)[-1] == "US$ 4,00"
+
+
 def test_falhas_viram_texto_da_tabela():
     assert quebras._falhas([]) == "nenhum"
     assert quebras._falhas([("a", 1), ("b", 5)]) == "`a` (1 linha)<br>`b` (5 linhas)"
