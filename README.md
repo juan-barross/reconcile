@@ -20,6 +20,7 @@
 | [A reunião](docs/a_reuniao.md) | cada área responde à mesma pergunta; cada diferença tem causa e tamanho, e as pontes fecham no centavo |
 | [O painel](docs/painel.md) | as oito métricas oficiais mês a mês, ao lado do que cada área responderia sozinha |
 | [O dia em que alguém mexeu na origem](docs/o_dia_que_mexeram_na_origem.md) | cinco divergências reintroduzidas de propósito e o teste que pegou cada uma |
+| [O agente](docs/agente.md) | 48 perguntas a um agente de IA, com e sem a camada única |
 | [Growth Review](docs/growth_review.md) | quanto vale um lead de cada canal, com intervalos, e três recomendações |
 | [Contrato de métricas](docs/contrato_de_metricas.md) | definição, dono, regra de data e exclusões de cada métrica |
 | [Auditoria](docs/auditoria.md) | o que a origem tem de estranho antes de qualquer modelo |
@@ -91,7 +92,16 @@ Duas versões, o mesmo modelo e as mesmas 48 perguntas de negócio ([avaliacao/p
 - **A** só tem uma ferramenta de SQL nas tabelas brutas e precisa inventar a definição de cada métrica;
 - **B** só enxerga as métricas do contrato.
 
-O código e a avaliação estão prontos e testados com um cliente falso. A rodada contra a API ainda não foi feita; com uma chave em `ANTHROPIC_API_KEY`, `uv run reconcile avaliar` gera `docs/agente.md` com a taxa de consistência e o custo de cada versão. O modelo padrão é `claude-opus-5-5` e pode ser trocado em `RECONCILE_MODELO`.
+Resultado com `claude-opus-5.5` ([docs/agente.md](docs/agente.md)):
+
+| versão | consistentes | custo |
+|---|---:|---:|
+| A: SQL no dado bruto | 25 de 48 (52%) | US$ 0,84 |
+| B: métricas do contrato | 48 de 48 (100%) | US$ 0,55 |
+
+A versão A acerta o que tem uma leitura só, como leads e contratos, e erra onde as áreas também divergiam: lojistas ativados (0 de 6), receita bruta (0 de 6) e pedidos válidos (2 de 6). Sem o contrato, o agente repete as escolhas que cada área fazia sozinha. A versão B acerta tudo e ainda gasta menos, porque não precisa explorar as tabelas.
+
+Para rodar de novo, defina `ANTHROPIC_API_KEY` ou `OPENROUTER_API_KEY` e use `uv run reconcile avaliar`. O modelo pode ser trocado em `RECONCILE_MODELO`.
 
 ## Como funciona
 
