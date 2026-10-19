@@ -1,0 +1,40 @@
+name: Resultado no dado real
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  resultado:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Instala dependências
+        run: uv sync --locked
+
+      - name: Baixa a Olist, roda o dbt e gera os relatórios
+        run: uv run reconcile tudo
+
+      - name: Reintroduz cada divergência e mostra o teste que a pega
+        run: uv run reconcile quebrar
+
+      - name: Publica o resultado nesta página
+        if: always()
+        run: |
+          for doc in veredito a_reuniao o_dia_que_mexeram_na_origem; do
+            [ -f "docs/$doc.md" ] && cat "docs/$doc.md" >> "$GITHUB_STEP_SUMMARY"
+            echo >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relatorios
+          path: docs/

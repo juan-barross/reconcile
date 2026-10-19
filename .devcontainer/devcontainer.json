@@ -1,0 +1,11 @@
+{
+  "name": "Reconcile",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "postCreateCommand": "pip install --user uv && uv sync",
+  "postAttachCommand": "echo 'Rode: uv run reconcile tudo  (dado real)  ou  uv run reconcile --amostra tudo'",
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python"]
+    }
+  }
+}
