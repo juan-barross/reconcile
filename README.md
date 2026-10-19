@@ -43,7 +43,7 @@ Com os números confiáveis, a pergunta de negócio:
 
 ## Rode você mesmo
 
-Requer Python 3.12 e [uv](https://docs.astral.sh/uv/). Não precisa de conta no Kaggle nem de Docker.
+Requer Python 3.12 e [uv](https://docs.astral.sh/uv/). Não precisa de conta no Kaggle, de Docker nem de chave de API. Só os dois comandos do agente (`perguntar` e `avaliar`) usam uma chave, e o resultado dele já está em [docs/agente.md](docs/agente.md).
 
 ```bash
 git clone https://github.com/juan-barross/Reconcile-.git reconcile
@@ -80,8 +80,8 @@ uv run pytest
 | `reconcile metricas --mes 2018-03` | as mesmas métricas pela camada semântica (`mf query`) |
 | `reconcile quebrar` | reintroduz cada divergência numa cópia e mostra o teste que a pega |
 | `reconcile crescimento` | valor por lead e ativação por canal |
-| `reconcile perguntar "..." --versao B` | pergunta ao agente |
-| `reconcile avaliar` | compara as versões A e B do agente com o painel |
+| `reconcile perguntar "..." --versao B` | pergunta ao agente (usa chave) |
+| `reconcile avaliar` | compara as versões A e B do agente com o painel (usa chave) |
 
 Com `--amostra`, as saídas vão para `data/amostra/` e não sobrescrevem `docs/`.
 
@@ -99,9 +99,9 @@ Resultado com `claude-opus-5.5` ([docs/agente.md](docs/agente.md)):
 | A: SQL no dado bruto | 25 de 48 (52%) | US$ 0,84 |
 | B: métricas do contrato | 48 de 48 (100%) | US$ 0,55 |
 
-A versão A acerta o que tem uma leitura só, como leads e contratos, e erra onde as áreas também divergiam: lojistas ativados (0 de 6), receita bruta (0 de 6) e pedidos válidos (2 de 6). Sem o contrato, o agente repete as escolhas que cada área fazia sozinha. A versão B acerta tudo e ainda gasta menos, porque não precisa explorar as tabelas.
+A versão A acerta o que tem uma leitura só, como leads e contratos, e erra onde as áreas também divergiam: lojistas ativados (0 de 6), receita bruta (0 de 6) e pedidos válidos (2 de 6). Sem o contrato, o agente repete as escolhas que cada área fazia sozinha. A versão B acerta tudo e gasta menos, porque não precisa explorar as tabelas.
 
-Para rodar de novo, defina `ANTHROPIC_API_KEY` ou `OPENROUTER_API_KEY` e use `uv run reconcile avaliar`. O modelo pode ser trocado em `RECONCILE_MODELO`.
+Para refazer a avaliação, defina `ANTHROPIC_API_KEY` ou `OPENROUTER_API_KEY` e rode `uv run reconcile avaliar`. O modelo muda com `RECONCILE_MODELO`.
 
 ## Como funciona
 
