@@ -122,7 +122,7 @@ def perguntar(ctx: typer.Context, pergunta: str, versao: str = "B") -> None:
     console.print(_perguntar(pergunta, versao.upper(), ctx.obj.db_path).texto)
 
 
-@app.command(help="Avalia as versões A e B do agente contra o painel (usa a API da Anthropic).")
+@app.command(help="Avalia as versões A e B do agente contra o painel (pede chave de API).")
 def avaliar(
     ctx: typer.Context,
     gerar_perguntas: bool = typer.Option(False, help="Só regenera avaliacao/perguntas.jsonl."),
