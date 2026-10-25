@@ -52,8 +52,6 @@ PEDIDOS_COM_JUROS = (5, 10, 15)
 PEDIDO_COM_VOUCHER_ZERADO = 12
 PEDIDOS_CANCELADOS_COM_ITENS = (27, 28)
 PEDIDOS_SEM_ITENS = {29: "unavailable", 30: "canceled"}
-
-
 CLIENTES_QUE_VOLTAM = range(21, 25)
 
 FMT = "%Y-%m-%d %H:%M:%S"
@@ -92,24 +90,8 @@ def _funil(t: dict) -> None:
 
     for n, seller, dias in [(1, "s1", 10), (2, "s2", 12), (3, "s5", 30), (4, "s6", 40)]:
         fechado = INICIO_FUNIL + timedelta(days=7 * n + dias, hours=14)
-        t["closed_deals"].append(
-            [
-                f"m{n:02d}",
-                seller,
-                "sdr1",
-                "sr1",
-                _ts(fechado),
-                "health_beauty",
-                "online_medium",
-                "cat",
-                "",
-                "",
-                "",
-                "reseller",
-                "",
-                "0.0",
-            ]
-        )
+        linha = f"m{n:02d},{seller},sdr1,sr1,{_ts(fechado)},health_beauty,online_medium,cat"
+        t["closed_deals"].append((linha + ",,,,reseller,,0.0").split(","))
 
 
 def _clientes(t: dict) -> None:
@@ -144,50 +126,26 @@ def _pedidos(t: dict) -> None:
             status, envio, entrega = "canceled", None, None
         if i in PEDIDOS_SEM_ITENS:
             status, envio, entrega = PEDIDOS_SEM_ITENS[i], None, None
-        t["orders"].append(
-            [
-                pedido,
-                f"c{i:02d}",
-                status,
-                _ts(compra),
-                _ts(compra + timedelta(hours=2)),
-                _ts(envio),
-                _ts(entrega),
-                _dia(compra + timedelta(days=15)),
-            ]
-        )
+        datas = [compra, compra + timedelta(hours=2), envio, entrega]
+        estimada = _dia(compra + timedelta(days=15))
+        t["orders"].append([pedido, f"c{i:02d}", status, *map(_ts, datas), estimada])
 
         total = 0.0
         if i not in PEDIDOS_SEM_ITENS:
             preco, frete = (15, 5) if i == PEDIDO_SEM_PAGAMENTO else (200 + i, 10)
             for item in range(1, 3 if i % 4 == 0 else 2):
                 total += preco + frete
+                produto, lojista = f"p{(i + item) % 5 + 1}", f"s{(i + item) % 4 + 1}"
+                limite = _ts(compra + timedelta(days=3))
                 t["order_items"].append(
-                    [
-                        pedido,
-                        str(item),
-                        f"p{(i + item) % 5 + 1}",
-                        f"s{(i + item) % 4 + 1}",
-                        _ts(compra + timedelta(days=3)),
-                        f"{preco:.2f}",
-                        f"{frete:.2f}",
-                    ]
+                    [pedido, str(item), produto, lojista, limite, f"{preco:.2f}", f"{frete:.2f}"]
                 )
         t["order_payments"] += _pagamentos(pedido, i, total)
 
         if status == "delivered":
             review = "r01" if i in (1, 2) else f"r{i:02d}"
-            t["order_reviews"].append(
-                [
-                    review,
-                    pedido,
-                    str(i % 5 + 1),
-                    "",
-                    "",
-                    _dia(compra + timedelta(days=7)),
-                    _ts(compra + timedelta(days=8)),
-                ]
-            )
+            criada, respondida = _dia(compra + timedelta(7)), _ts(compra + timedelta(8))
+            t["order_reviews"].append([review, pedido, str(i % 5 + 1), "", "", criada, respondida])
 
 
 def gerar() -> dict[str, list[list[str]]]:
@@ -200,12 +158,7 @@ def gerar() -> dict[str, list[list[str]]]:
 def escrever(destino: Path) -> list[Path]:
     destino.mkdir(parents=True, exist_ok=True)
     tabelas = gerar()
-    caminhos = []
     for fonte in FONTES:
-        caminho = destino / fonte.arquivo
-        with caminho.open("w", newline="", encoding="utf-8") as f:
-            escritor = csv.writer(f)
-            escritor.writerow(CABECALHOS[fonte.tabela])
-            escritor.writerows(tabelas[fonte.tabela])
-        caminhos.append(caminho)
-    return caminhos
+        with (destino / fonte.arquivo).open("w", newline="", encoding="utf-8") as f:
+            csv.writer(f).writerows([CABECALHOS[fonte.tabela], *tabelas[fonte.tabela]])
+    return [destino / fonte.arquivo for fonte in FONTES]

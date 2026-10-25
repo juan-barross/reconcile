@@ -4,7 +4,6 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-import anthropic
 import duckdb
 
 from reconcile.pontes import camada_unica
@@ -95,7 +94,9 @@ def executar(versao: str, entrada: dict, db_path: Path) -> str:
             return f"erro: {erro}"
 
 
-def _cliente() -> anthropic.Anthropic:
+def _cliente():
+    import anthropic
+
     if OPENROUTER:
         return anthropic.Anthropic(base_url="https://openrouter.ai/api", auth_token=OPENROUTER)
     return anthropic.Anthropic()

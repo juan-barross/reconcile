@@ -1,7 +1,5 @@
 from pathlib import Path
 
-from matplotlib.figure import Figure
-
 from reconcile.base import pct
 from reconcile.valor_por_lead import JANELA, Estimativa, curva_km
 
@@ -13,6 +11,8 @@ SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"]
 
 
 def eixos(altura: float):
+    from matplotlib.figure import Figure
+
     fig = Figure(figsize=(7.2, altura), dpi=150, facecolor=SUPERFICIE)
     ax = fig.subplots()
     ax.set_facecolor(SUPERFICIE)
@@ -41,9 +41,9 @@ def afastar(posicoes: list[float], minimo: float) -> list[float]:
     return saida
 
 
-def rotular_finais(ax, x: float, finais: list[tuple[str, float]], fmt, minimo: float) -> None:
-    alturas = afastar([y for _, y in finais], minimo)
-    for (nome, y), altura in zip(finais, alturas, strict=True):
+def rotular_finais(ax, finais: list[tuple[float, float, str]], fmt, minimo: float) -> None:
+    alturas = afastar([y for _, y, _ in finais], minimo)
+    for (x, y, nome), altura in zip(finais, alturas, strict=True):
         ax.text(x, altura, f"{nome} {fmt(y)}", va="center", fontsize=8.5, color=TEXTO)
 
 
@@ -83,8 +83,8 @@ def ativacao_por_canal(tempos: dict, canais: list[str], saida: Path) -> None:
         xs = [d for d, _ in pontos] + [JANELA]
         ys = [f for _, f in pontos] + [pontos[-1][1]]
         ax.step(xs, ys, where="post", color=cor, lw=2)
-        finais.append((canal, ys[-1]))
-    rotular_finais(ax, JANELA + 3, finais, pct, 0.035)
+        finais.append((JANELA + 3, ys[-1], canal))
+    rotular_finais(ax, finais, pct, 0.035)
     ax.axvline(90, color=GRADE, lw=1)
     ax.set_xlim(0, JANELA)
     ax.set_xticks(range(0, JANELA + 1, 30))
@@ -113,11 +113,9 @@ def linhas_por_mes(
         xs = [posicao[m] for m in sorted(valores)]
         ys = [valores[m] for m in sorted(valores)]
         ax.plot(xs, ys, color=cor, lw=2, marker="o", ms=4)
-        rotulos.append((xs[-1], ys[-1], nome))
+        rotulos.append((xs[-1] + 0.15, ys[-1], nome))
     todos = [v for valores in series.values() for v in valores.values()]
-    alturas = afastar([y for _, y, _ in rotulos], 0.06 * (max(todos) - min(todos)))
-    for (x, y, nome), altura in zip(rotulos, alturas, strict=True):
-        ax.text(x + 0.15, altura, f"{nome} {fmt(y)}", va="center", fontsize=8.5, color=TEXTO)
+    rotular_finais(ax, rotulos, fmt, 0.06 * (max(todos) - min(todos)))
     ax.set_xticks(range(len(meses)), [m[2:] for m in meses])
     ax.set_xlim(-0.3, len(meses) - 0.7)
     ax.yaxis.set_major_formatter(lambda v, _: fmt(v))
